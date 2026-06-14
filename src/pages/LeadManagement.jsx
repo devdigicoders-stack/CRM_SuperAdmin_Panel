@@ -2,7 +2,8 @@ import { memo, useState, useEffect } from "react";
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
   FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, 
-  FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight 
+  FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
+  FaUpload, FaDownload, FaFileCsv
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -38,6 +39,14 @@ const LeadManagement = () => {
   
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
   const [followupLead, setFollowupLead] = useState(null);
+
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyLead, setHistoryLead] = useState(null);
+
+  // Bulk Upload States
+  const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
+  const [bulkFile, setBulkFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -207,10 +216,49 @@ const LeadManagement = () => {
     setIsFollowupModalOpen(true);
   };
 
+  const handleDownloadSample = () => {
+    const csvContent = "data:text/csv;charset=utf-8,name,email,phone,status,source,priority,assignedTo\nJohn Doe,john@example.com,9876543210,new,Website,high,";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "sample_leads.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleBulkUploadSubmit = async (e) => {
+    e.preventDefault();
+    if (!bulkFile) return toast.error("Please select a file to upload");
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", bulkFile);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const res = await axios.post(`${baseUrl}/leads/bulk-upload`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (res.data.status === "success") {
+        toast.success(res.data.message || "Leads uploaded successfully!");
+        setIsBulkUploadModalOpen(false);
+        setBulkFile(null);
+        fetchLeads(); // refresh the list
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to upload leads");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const s = (status || '').toLowerCase();
     if (s.includes('new') || s.includes('pending')) return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400';
-    if (s.includes('contacted') || s.includes('assigned')) return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400';
+    if (s.includes('contacted') || s.includes('assigned')) return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400';
     if (s.includes('progress') || s.includes('warm') || s.includes('hot')) return 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400';
     if (s.includes('convert') || s.includes('won')) return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400';
     if (s.includes('lost') || s.includes('missed') || s.includes('cold')) return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400';
@@ -241,13 +289,23 @@ const LeadManagement = () => {
           </p>
         </div>
         
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-          style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
-        >
-          <FaPlus className="text-sm" /> Add New Lead
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsBulkUploadModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border"
+            style={{ borderColor: themeColors.primary, color: themeColors.primary, backgroundColor: `${themeColors.primary}10` }}
+          >
+            <FaUpload className="text-sm" /> Bulk Upload
+          </button>
+          
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+            style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
+          >
+            <FaPlus className="text-sm" /> Add New Lead
+          </button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -304,6 +362,7 @@ const LeadManagement = () => {
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Assigned To</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Source & Priority</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Status</th>
+                <th className="py-4 px-5 font-semibold text-sm min-w-[200px]" style={{ color: themeColors.textSecondary }}>Remarks & Follow-Up</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Added On</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Actions</th>
               </tr>
@@ -311,7 +370,7 @@ const LeadManagement = () => {
             <tbody>
               {isFetching ? (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center">
+                  <td colSpan="8" className="py-12 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 mx-auto" style={{ borderColor: themeColors.primary }}></div>
                   </td>
                 </tr>
@@ -394,6 +453,55 @@ const LeadManagement = () => {
                       ))}
                     </select>
                   </td>
+                  <td className="py-4 px-5">
+                    <div className="flex flex-col gap-2.5 min-w-[220px] max-w-[280px]">
+                      {/* Latest Remark Section */}
+                      {lead.remarks && lead.remarks.length > 0 ? (
+                        <div 
+                          onClick={() => { setHistoryLead(lead); setIsHistoryModalOpen(true); }}
+                          className="p-2.5 rounded-lg border shadow-sm transition-all hover:shadow-md cursor-pointer group hover:bg-black/5 dark:hover:bg-white/5" 
+                          style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: themeColors.primary }}></span>
+                              <span className="font-bold text-[10px] uppercase tracking-wider" style={{ color: themeColors.primary }}>Latest Remark</span>
+                            </div>
+                            <span className="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColors.primary }}>View History</span>
+                          </div>
+                          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: themeColors.text }} title={lead.remarks[lead.remarks.length - 1].note}>
+                            {lead.remarks[lead.remarks.length - 1].note}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-2 rounded-lg border border-dashed flex items-center justify-center" style={{ borderColor: themeColors.border, backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                          <span className="text-xs italic" style={{ color: themeColors.textSecondary }}>No remarks yet</span>
+                        </div>
+                      )}
+                      
+                      {/* Follow-Up Section */}
+                      {lead.followUpDate ? (
+                        <div className="flex items-center gap-2 p-2 rounded-lg border" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+                          <div className="p-1.5 rounded-md" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#d97706' }}>
+                            <FaCalendarPlus className="text-xs" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#b45309' }}>Next Follow-Up</span>
+                            <span className="text-xs font-bold" style={{ color: '#92400e' }}>
+                              {new Date(lead.followUpDate).toLocaleString('en-IN', { 
+                                day: '2-digit', month: 'short', year: 'numeric', 
+                                hour: '2-digit', minute: '2-digit', hour12: true 
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-medium italic px-1" style={{ color: themeColors.textSecondary }}>
+                          No follow-up scheduled
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="py-4 px-5 text-xs font-medium whitespace-nowrap" style={{ color: themeColors.textSecondary }}>
                     {new Date(lead.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                   </td>
@@ -412,7 +520,7 @@ const LeadManagement = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center">
+                  <td colSpan="8" className="py-12 text-center">
                     <p className="font-medium" style={{ color: themeColors.textSecondary }}>No leads found matching your criteria.</p>
                   </td>
                 </tr>
@@ -638,22 +746,136 @@ const LeadManagement = () => {
         </div>
       )}
 
-      {/* Follow-up Modal (Placeholders for now) */}
-      {isFollowupModalOpen && (
+      {/* Remarks History Modal */}
+      {isHistoryModalOpen && historyLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div 
-            className="w-full max-w-md rounded-xl shadow-2xl overflow-hidden"
+            className="w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh]"
             style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border, borderWidth: '1px' }}
           >
-            <div className="flex justify-between items-center p-4 border-b" style={{ borderColor: themeColors.border }}>
-              <h2 className="text-lg font-semibold" style={{ color: themeColors.text }}>Schedule Follow-up</h2>
-              <button onClick={() => setIsFollowupModalOpen(false)} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
+            <div className="flex justify-between items-center p-5 border-b shrink-0" style={{ borderColor: themeColors.border }}>
+              <div>
+                <h2 className="text-lg font-bold" style={{ color: themeColors.text }}>Remarks History</h2>
+                <p className="text-xs mt-1" style={{ color: themeColors.textSecondary }}>
+                  Lead: <span className="font-bold">{historyLead.name}</span>
+                </p>
+              </div>
+              <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
                 <FaTimes />
               </button>
             </div>
-            <div className="p-6">
-              <p style={{ color: themeColors.textSecondary }} className="text-sm">Mock follow-up for <strong>{followupLead?.name}</strong>...</p>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {historyLead.remarks && historyLead.remarks.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Reverse remarks array to show latest first */}
+                  {[...historyLead.remarks].reverse().map((remark, idx) => (
+                    <div key={idx} className="relative pl-6 pb-2 border-l-2 last:border-l-0 last:pb-0" style={{ borderColor: themeColors.border }}>
+                      <div className="absolute -left-[5px] top-0 w-2 h-2 rounded-full ring-4" style={{ backgroundColor: themeColors.primary, ringColor: themeColors.surface }}></div>
+                      <div className="p-3 rounded-lg border shadow-sm" style={{ backgroundColor: themeColors.background, borderColor: themeColors.border }}>
+                        <div className="flex justify-between items-start gap-4 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+                            {remark.createdAt ? new Date(remark.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Unknown Date'}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: themeColors.text }}>
+                          {remark.note}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="italic" style={{ color: themeColors.textSecondary }}>No remarks history available for this lead.</p>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {isBulkUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div 
+            className="w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+            style={{ backgroundColor: themeColors.surface, border: `1px solid ${themeColors.border}` }}
+          >
+            <div className="flex justify-between items-center p-5 border-b" style={{ borderColor: themeColors.border }}>
+              <div>
+                <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: themeColors.text }}>
+                  <FaUpload style={{ color: themeColors.primary }} /> Bulk Upload Leads
+                </h2>
+                <p className="text-xs mt-1" style={{ color: themeColors.textSecondary }}>Upload leads via CSV file</p>
+              </div>
+              <button onClick={() => { setIsBulkUploadModalOpen(false); setBulkFile(null); }} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
+                <FaTimes />
+              </button>
+            </div>
+            
+            <form onSubmit={handleBulkUploadSubmit} className="p-6">
+              <div className="mb-6">
+                <div 
+                  className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ borderColor: themeColors.border }}
+                  onClick={() => document.getElementById('csvUploadInput').click()}
+                >
+                  <input 
+                    id="csvUploadInput"
+                    type="file" 
+                    accept=".csv" 
+                    className="hidden" 
+                    onChange={(e) => setBulkFile(e.target.files[0])}
+                  />
+                  <FaFileCsv className="text-4xl mx-auto mb-3" style={{ color: themeColors.primary }} />
+                  <p className="font-medium mb-1" style={{ color: themeColors.text }}>
+                    {bulkFile ? bulkFile.name : "Click to select a CSV file"}
+                  </p>
+                  <p className="text-xs" style={{ color: themeColors.textSecondary }}>
+                    {bulkFile ? `${(bulkFile.size / 1024).toFixed(2)} KB` : "Only .csv files are supported"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6 flex justify-between items-center bg-black/5 dark:bg-white/5 p-4 rounded-xl">
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: themeColors.text }}>Need a template?</p>
+                  <p className="text-xs mt-0.5" style={{ color: themeColors.textSecondary }}>Download sample CSV format</p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleDownloadSample}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                  style={{ backgroundColor: themeColors.surface, color: themeColors.primary, border: `1px solid ${themeColors.border}` }}
+                >
+                  <FaDownload /> Download
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: themeColors.border }}>
+                <button 
+                  type="button"
+                  onClick={() => { setIsBulkUploadModalOpen(false); setBulkFile(null); }}
+                  className="px-4 py-2 rounded-lg font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ color: themeColors.text }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isUploading || !bulkFile}
+                  className="px-6 py-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:shadow-lg"
+                  style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
+                >
+                  {isUploading ? (
+                    <><div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"></div> Uploading...</>
+                  ) : (
+                    <><FaUpload /> Upload Leads</>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
