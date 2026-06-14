@@ -9,6 +9,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
 
 const LeadManagement = () => {
   const { themeColors } = useTheme();
@@ -252,6 +253,34 @@ const LeadManagement = () => {
       toast.error(err.response?.data?.message || "Failed to upload leads");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDeleteLead = async (id) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "This lead will be permanently deleted.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const res = await axios.delete(`${baseUrl}/leads/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.status === "success") {
+          toast.success("Lead deleted successfully");
+          fetchLeads();
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error(err.response?.data?.message || "Failed to delete lead");
+      }
     }
   };
 
@@ -514,6 +543,15 @@ const LeadManagement = () => {
                         title="Assign Lead"
                       >
                         <FaUserPlus />
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleDeleteLead(lead._id)}
+                        className="p-2 rounded-md transition-all hover:scale-110"
+                        style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                        title="Delete Lead"
+                      >
+                        <FaTrash />
                       </button>
                     </div>
                   </td>
