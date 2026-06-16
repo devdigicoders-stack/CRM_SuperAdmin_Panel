@@ -17,16 +17,16 @@ const Reports = lazy(() => import("../pages/Reports"));
 const routes = [
   { path: "/dashboard", component: Dashboard, name: "Dashboard", icon: FaTachometerAlt, permission: "dashboard" },
   { path: "/create-admin", component: CreateAdmin, name: "Create Admin", icon: FaUserPlus, superAdminOnly: true },
-  { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser, permission: "users" },
-  { path: "/lead-management", component: LeadManagement, name: "Lead Management", icon: FaBullhorn, permission: "leads" },
-  { path: "/user-history", component: UserHistory, name: "Staff History", icon: FaUsers, permission: "users" },
-  { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog, permission: "settings" },
-  { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt, permission: "leads" },
-  { path: "/reports", component: Reports, name: "Reports & Analytics", icon: FaChartLine, permission: "dashboard" },
+  { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser, permission: "create-staff" },
+  { path: "/lead-management", component: LeadManagement, name: "Lead Management", icon: FaBullhorn, permission: "lead-management" },
+  { path: "/user-history", component: UserHistory, name: "Staff History", icon: FaUsers, permission: "user-history" },
+  { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog, permission: "global-settings" },
+  { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt, permission: "calendar" },
+  { path: "/reports", component: Reports, name: "Reports & Analytics", icon: FaChartLine, permission: "reports" },
   { path: "/notifications", component: Notifications, name: "Notifications", icon: FaBell },
   { path: "/profile", component: Profile, name: "My Profile", icon: FaUser },
   { path: "/change-password", component: ChangePassword, name: "Change Password", icon: FaLock },
-  { path: "/missed-follow-ups", component: MissedFollowUps, name: "Missed Follow-Ups", icon: FaExclamationTriangle, hide: true, permission: "dashboard" },
+  { path: "/missed-follow-ups", component: MissedFollowUps, name: "Missed Follow-Ups", icon: FaExclamationTriangle, hide: true, permission: "missed-follow-ups" },
 ];
 
 export default routes;

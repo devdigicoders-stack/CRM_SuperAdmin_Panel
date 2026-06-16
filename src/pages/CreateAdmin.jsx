@@ -6,15 +6,14 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { FaUserPlus, FaCheck, FaShieldAlt, FaTimes, FaEdit, FaTrash, FaUserShield, FaEye } from "react-icons/fa";
 
-const PERMISSIONS_LIST = [
-  { id: "dashboard", label: "Dashboard Access" },
-  { id: "leads", label: "Lead Management" },
-  { id: "accounts", label: "Accounts & Finance" },
-  { id: "installation", label: "Installation & Tasks" },
-  { id: "reports", label: "Reports & Analytics" },
-  { id: "settings", label: "Global Settings" },
-  { id: "users", label: "User Management" }
-];
+import routes from "../route/SidebarRaoute";
+
+const PERMISSIONS_LIST = routes
+  .filter(r => r.permission) // Only include routes that require a specific permission
+  .map(r => ({
+    id: r.permission,
+    label: r.name
+  }));
 
 const CreateAdmin = () => {
   const { themeColors } = useTheme();
@@ -33,7 +32,7 @@ const CreateAdmin = () => {
   const [editPermissions, setEditPermissions] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    name: "", email: "", phone: ""
+    name: "", email: "", phone: "", password: ""
   });
 
   // View Modal State
@@ -209,7 +208,8 @@ const CreateAdmin = () => {
     setEditFormData({
       name: admin.name || "",
       email: admin.email || "",
-      phone: admin.phone || ""
+      phone: admin.phone || "",
+      password: ""
     });
     setEditModalOpen(true);
   };
@@ -628,6 +628,16 @@ const CreateAdmin = () => {
                       style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
                     />
                   </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Change Password (Optional)</label>
+                    <input 
+                      type="text" value={editFormData.password} onChange={(e) => setEditFormData({...editFormData, password: e.target.value})}
+                      placeholder="Enter new password" minLength={6}
+                      className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-2 shadow-sm"
+                      style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
+                    />
+                  </div>
                 </div>
 
                 {/* Right Column: Permissions */}
@@ -758,6 +768,21 @@ const CreateAdmin = () => {
                   <p className="text-sm font-medium" style={{ color: themeColors.text }}>
                     {new Date(viewingUser.createdAt).toLocaleDateString()}
                   </p>
+                </div>
+                <div className="p-4 rounded-lg border col-span-2" style={{ borderColor: themeColors.border, backgroundColor: `${themeColors.primary}05` }}>
+                  <p className="text-sm font-bold mb-3" style={{ color: themeColors.primary }}>Login Credentials</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Login ID (Email)</p>
+                      <p className="text-sm font-bold font-mono bg-white dark:bg-black/20 p-2 rounded border" style={{ color: themeColors.text, borderColor: themeColors.border }}>{viewingUser.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Password</p>
+                      <p className="text-sm font-bold font-mono bg-white dark:bg-black/20 p-2 rounded border" style={{ color: themeColors.text, borderColor: themeColors.border }}>
+                        {viewingUser.password ? (viewingUser.password.startsWith('$2') ? '(Encrypted - Please Reset)' : viewingUser.password) : '******'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

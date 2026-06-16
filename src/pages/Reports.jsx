@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useMemo } from "react";
-import { FaChartBar, FaChartLine, FaCheckCircle, FaExclamationCircle, FaRupeeSign, FaCalendarDay, FaCalendarWeek, FaCalendarAlt, FaHistory, FaFilter } from "react-icons/fa";
+import { FaChartBar, FaChartLine, FaCheckCircle, FaExclamationCircle, FaRupeeSign, FaCalendarDay, FaCalendarWeek, FaCalendarAlt, FaHistory, FaFilter, FaWrench, FaClipboardCheck, FaHourglassHalf } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -248,8 +248,50 @@ const Reports = () => {
             </div>
           </div>
 
+          {/* Installation KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-6">
+            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -mr-10 -mt-10"></div>
+              <div className="flex justify-between items-start relative z-10">
+                <div>
+                  <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Total Installations</p>
+                  <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">{currentData.totalInstallations?.toLocaleString() || 0}</h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                  <FaWrench className="text-2xl" />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+               <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-bl-full -mr-10 -mt-10"></div>
+              <div className="flex justify-between items-start relative z-10">
+                <div>
+                  <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Completed Installations</p>
+                  <h3 className="text-3xl font-bold text-teal-600 dark:text-teal-400">{currentData.completedInstallations?.toLocaleString() || 0}</h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">
+                  <FaClipboardCheck className="text-2xl" />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+               <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full -mr-10 -mt-10"></div>
+              <div className="flex justify-between items-start relative z-10">
+                <div>
+                  <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Pending Installations</p>
+                  <h3 className="text-3xl font-bold text-orange-600 dark:text-orange-400">{currentData.pendingInstallations?.toLocaleString() || 0}</h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                  <FaHourglassHalf className="text-2xl" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Breakdowns Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-6">
             <div className="rounded-xl p-6 shadow-sm border h-full" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
               <h3 className="text-lg font-bold mb-2 flex items-center gap-2" style={{ color: themeColors.text }}>Status Breakdown</h3>
               {Object.keys(currentData.statusBreakdown || {}).length > 0 ? (
@@ -280,6 +322,18 @@ const Reports = () => {
                 <>
                   <HighchartsReact highcharts={Highcharts} options={getPieChartOptions(currentData.priorityBreakdown)} />
                   {renderProgressBars(currentData.priorityBreakdown, themeColors.warning)}
+                </>
+              ) : (
+                <div className="text-center py-12 text-sm italic" style={{ color: themeColors.textSecondary }}>No data available.</div>
+              )}
+            </div>
+
+            <div className="rounded-xl p-6 shadow-sm border h-full" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+              <h3 className="text-lg font-bold mb-2 flex items-center gap-2" style={{ color: themeColors.text }}>Installation Overview</h3>
+              {currentData.totalInstallations > 0 ? (
+                <>
+                  <HighchartsReact highcharts={Highcharts} options={getDoughnutChartOptions({ Completed: currentData.completedInstallations || 0, Pending: currentData.pendingInstallations || 0 })} />
+                  {renderProgressBars({ Completed: currentData.completedInstallations || 0, Pending: currentData.pendingInstallations || 0 }, "#3b82f6")}
                 </>
               ) : (
                 <div className="text-center py-12 text-sm italic" style={{ color: themeColors.textSecondary }}>No data available.</div>

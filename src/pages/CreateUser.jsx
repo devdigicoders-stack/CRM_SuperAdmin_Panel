@@ -44,7 +44,7 @@ const CreateUser = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    name: "", email: "", phone: "", role: "accountant"
+    name: "", email: "", phone: "", role: "accountant", password: ""
   });
 
   // Form State
@@ -146,7 +146,8 @@ const CreateUser = () => {
       name: user.name || "",
       email: user.email || "",
       phone: user.phone || "",
-      role: user.role || "accountant"
+      role: user.role || "accountant",
+      password: ""
     });
     setEditModalOpen(true);
   };
@@ -642,6 +643,16 @@ const CreateUser = () => {
                       </div>
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Change Password (Optional)</label>
+                    <input 
+                      type="text" value={editFormData.password} onChange={(e) => setEditFormData({...editFormData, password: e.target.value})}
+                      placeholder="Enter new password" minLength={6}
+                      className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-2 shadow-sm"
+                      style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
+                    />
+                  </div>
                 </div>
               </form>
             </div>
@@ -728,6 +739,21 @@ const CreateUser = () => {
                   <p className="text-sm font-medium" style={{ color: themeColors.text }}>
                     {new Date(viewingUser.createdAt).toLocaleDateString()}
                   </p>
+                </div>
+                <div className="p-4 rounded-lg border col-span-2" style={{ borderColor: themeColors.border, backgroundColor: `${themeColors.primary}05` }}>
+                  <p className="text-sm font-bold mb-3" style={{ color: themeColors.primary }}>Login Credentials</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Login ID (Email)</p>
+                      <p className="text-sm font-bold font-mono bg-white dark:bg-black/20 p-2 rounded border" style={{ color: themeColors.text, borderColor: themeColors.border }}>{viewingUser.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Password</p>
+                      <p className="text-sm font-bold font-mono bg-white dark:bg-black/20 p-2 rounded border" style={{ color: themeColors.text, borderColor: themeColors.border }}>
+                        {viewingUser.password ? (viewingUser.password.startsWith('$2') ? '(Encrypted - Please Reset)' : viewingUser.password) : '******'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
