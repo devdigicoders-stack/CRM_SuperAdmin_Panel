@@ -117,9 +117,23 @@ const CreateAdmin = () => {
     
     setIsSubmitting(true);
     
+    const expandedPermissions = [...formData.permissions];
+    if (formData.permissions.includes('create-staff') || formData.permissions.includes('user-history')) {
+      if (!expandedPermissions.includes('users')) expandedPermissions.push('users');
+    }
+    if (formData.permissions.includes('lead-management')) {
+      if (!expandedPermissions.includes('leads')) expandedPermissions.push('leads');
+    }
+    if (formData.permissions.includes('global-settings')) {
+      if (!expandedPermissions.includes('settings')) expandedPermissions.push('settings');
+    }
+
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const response = await axios.post(`${baseUrl}/users`, formData, {
+      const response = await axios.post(`${baseUrl}/users`, {
+        ...formData,
+        permissions: expandedPermissions
+      }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -243,12 +257,23 @@ const CreateAdmin = () => {
     
     setIsUpdating(true);
     
+    const expandedPermissions = [...editPermissions];
+    if (editPermissions.includes('create-staff') || editPermissions.includes('user-history')) {
+      if (!expandedPermissions.includes('users')) expandedPermissions.push('users');
+    }
+    if (editPermissions.includes('lead-management')) {
+      if (!expandedPermissions.includes('leads')) expandedPermissions.push('leads');
+    }
+    if (editPermissions.includes('global-settings')) {
+      if (!expandedPermissions.includes('settings')) expandedPermissions.push('settings');
+    }
+
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const payload = {
         ...editFormData,
         role: "admin",
-        permissions: editPermissions
+        permissions: expandedPermissions
       };
       const response = await axios.put(`${baseUrl}/users/${selectedAdmin._id}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
@@ -362,7 +387,7 @@ const CreateAdmin = () => {
                     <td className="py-4 px-6">
                       <div className="flex flex-wrap gap-1.5 max-w-[250px]">
                         {admin.permissions && admin.permissions.length > 0 ? (
-                          admin.permissions.map(perm => (
+                          admin.permissions.filter(perm => !['users', 'leads', 'settings'].includes(perm)).map(perm => (
                             <span 
                               key={perm}
                               className="px-2 py-0.5 rounded text-[10px] font-semibold border"
@@ -790,7 +815,7 @@ const CreateAdmin = () => {
                 <p className="text-sm font-bold mb-2" style={{ color: themeColors.textSecondary }}>Granted Permissions</p>
                 <div className="flex flex-wrap gap-2">
                   {viewingUser.permissions && viewingUser.permissions.length > 0 ? (
-                    viewingUser.permissions.map(perm => (
+                    viewingUser.permissions.filter(perm => !['users', 'leads', 'settings'].includes(perm)).map(perm => (
                       <span 
                         key={perm}
                         className="px-2.5 py-1 rounded-md text-xs font-semibold border"

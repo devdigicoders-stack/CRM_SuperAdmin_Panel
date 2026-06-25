@@ -31,6 +31,7 @@ const LeadManagement = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [newLead, setNewLead] = useState({ name: "", phone: "", email: "", source: "", priority: "" });
   const [settings, setSettings] = useState({ leadSources: [], priorities: [] });
+  const [phoneConflict, setPhoneConflict] = useState(null);
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
@@ -93,6 +94,45 @@ const LeadManagement = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, filterTag, currentPage, token]);
 
+  useEffect(() => {
+    const phone = newLead.phone?.trim();
+    if (!phone) {
+      setPhoneConflict(null);
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      setPhoneConflict(null);
+      return;
+    }
+
+    const delayDebounce = setTimeout(() => {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      axios.get(`${baseUrl}/leads/check-phone`, {
+        params: { phone },
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => {
+          if (res.data?.exists) {
+            const lead = res.data.lead;
+            setPhoneConflict({
+              exists: true,
+              name: lead.name,
+              assignedToName: lead.assignedTo?.name || null,
+              assignedToRole: lead.assignedTo?.role || null,
+            });
+          } else {
+            setPhoneConflict(null);
+          }
+        })
+        .catch(() => {
+          setPhoneConflict(null);
+        });
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [newLead.phone, token]);
+
   const fetchLeads = async () => {
     setIsFetching(true);
     try {
@@ -144,6 +184,7 @@ const LeadManagement = () => {
         toast.success("Lead created successfully!");
         setIsAddModalOpen(false);
         setNewLead({ name: "", phone: "", email: "", source: "", priority: "" });
+        setPhoneConflict(null);
         fetchLeads(); // Refresh leads
       }
     } catch (err) {
@@ -647,6 +688,17 @@ const LeadManagement = () => {
                       className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-colors"
                       style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
                     />
+                    {phoneConflict && (
+                      <div className="mt-1.5 p-2 rounded-lg border text-[11px] font-bold"
+                        style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5', color: '#b91c1c' }}>
+                        <span>⚠️ Mobile number pehle se hi added hai: <b>{phoneConflict.name}</b>.</span>
+                        {phoneConflict.assignedToName ? (
+                          <span> Assigned: <b className="capitalize">{phoneConflict.assignedToName}</b> ({phoneConflict.assignedToRole || 'sales'})</span>
+                        ) : (
+                          <span> (Not assigned)</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-bold mb-1.5" style={{ color: themeColors.text }}>Email</label>
