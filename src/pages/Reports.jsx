@@ -23,6 +23,42 @@ const Reports = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [activeTimeframe, setActiveTimeframe] = useState("thisMonth");
 
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (statusFilter) params.append("status", statusFilter);
+
+      const res = await axios.get(`${baseUrl}/reports/export/excel?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `leads_backup_${startDate || 'all'}_to_${endDate || 'all'}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Leads backup downloaded successfully!");
+    } catch (err) {
+      console.error("Download failed", err);
+      toast.error("Failed to download leads backup");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
     const fetchReports = async () => {
@@ -161,6 +197,64 @@ const Reports = () => {
             Comprehensive overview of lead generation, conversions, and team performance.
           </p>
         </div>
+      </div>
+
+      {/* Leads Backup & Export Panel */}
+      <div className="mb-8 p-6 rounded-xl border shadow-sm animate-fade-in" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+        <h3 className="text-lg font-bold mb-2 flex items-center gap-2" style={{ color: themeColors.text }}>
+          <FaClipboardCheck style={{ color: themeColors.primary }} /> Leads Backup & Export
+        </h3>
+        <p className="text-xs mb-4" style={{ color: themeColors.textSecondary }}>
+          Filter leads by registration date range and status to download a backup Excel spreadsheet.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>Start Date</label>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full p-2.5 rounded-lg border outline-none text-sm"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>End Date</label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full p-2.5 rounded-lg border outline-none text-sm"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>Status</label>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full p-2.5 rounded-lg border outline-none text-sm capitalize"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            >
+              <option value="">All Statuses</option>
+              <option value="new">New</option>
+              <option value="assigned">Assigned</option>
+              <option value="interested">Interested</option>
+              <option value="in_process">In Process</option>
+              <option value="converted">Converted</option>
+              <option value="closed">Closed</option>
+              <option value="not_interested">Not Interested</option>
+            </select>
+          </div>
+        </div>
+        <button
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="px-5 py-2.5 rounded-lg font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 text-white"
+          style={{ backgroundColor: themeColors.primary }}
+        >
+          {isDownloading ? "Downloading..." : "Download Backup (Excel)"}
+        </button>
       </div>
 
       {/* Timeframe Selector */}
