@@ -943,6 +943,17 @@ const LeadManagement = () => {
                 </button>
               </div>
 
+              <div className="mb-6 p-4 rounded-xl text-xs space-y-1.5" style={{ backgroundColor: `${themeColors.primary}10`, color: themeColors.text }}>
+                <p className="font-bold text-sm mb-2" style={{ color: themeColors.primary }}>Column Instructions:</p>
+                <ul className="list-disc pl-4 space-y-1.5 opacity-90">
+                  <li><b style={{ color: themeColors.primary }}>name, phone:</b> Required fields.</li>
+                  <li><b style={{ color: themeColors.primary }}>assignedTo:</b> Enter the exact <b>Email ID</b> of the User or Admin to direct assign.</li>
+                  <li><b style={{ color: themeColors.primary }}>status:</b> new, assigned, interested, in_process, converted, closed, not_interested.</li>
+                  <li><b style={{ color: themeColors.primary }}>priority:</b> high, medium, low.</li>
+                  <li><b style={{ color: themeColors.primary }}>tags, remark, source, email:</b> Optional free text fields.</li>
+                </ul>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: themeColors.border }}>
                 <button 
                   type="button"
