@@ -147,8 +147,12 @@ const LeadManagement = () => {
       
       if (searchTerm) params.search = searchTerm;
       if (filterTag) {
-        // Format tag to match backend case (e.g. 'interested' -> 'Interested')
-        params.tag = filterTag.charAt(0).toUpperCase() + filterTag.slice(1);
+        const knownStatuses = ['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed', 'call_done'];
+        if (knownStatuses.includes(filterTag.toLowerCase())) {
+          params.status = filterTag.toLowerCase();
+        } else {
+          params.tag = filterTag;
+        }
       }
 
       const response = await axios.get(`${baseUrl}/leads`, {
@@ -344,6 +348,13 @@ const LeadManagement = () => {
     if (p === 'medium') return '#f59e0b';
     if (p === 'low') return '#10b981';
     return themeColors.textSecondary;
+  };
+
+  const getVisiblePages = (current, total) => {
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 3) return [1, 2, 3, 4, '...', total];
+    if (current >= total - 2) return [1, '...', total - 3, total - 2, total - 1, total];
+    return [1, '...', current - 1, current, current + 1, '...', total];
   };
 
   return (
@@ -628,20 +639,25 @@ const LeadManagement = () => {
               </button>
               
               <div className="flex gap-1">
-                {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => handlePageChange(i + 1)}
-                    className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${currentPage === i + 1 ? 'shadow-sm' : 'border'}`}
-                    style={{ 
-                      backgroundColor: currentPage === i + 1 ? themeColors.primary : 'transparent',
-                      color: currentPage === i + 1 ? themeColors.onPrimary : themeColors.text,
-                      borderColor: currentPage === i + 1 ? themeColors.primary : themeColors.border
-                    }}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                {getVisiblePages(currentPage, totalPages).map((p, i) => {
+                  if (p === '...') {
+                    return <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-xs" style={{ color: themeColors.textSecondary }}>...</span>;
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => handlePageChange(p)}
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${currentPage === p ? 'shadow-sm' : 'border'}`}
+                      style={{ 
+                        backgroundColor: currentPage === p ? themeColors.primary : 'transparent',
+                        color: currentPage === p ? themeColors.onPrimary : themeColors.text,
+                        borderColor: currentPage === p ? themeColors.primary : themeColors.border
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
               </div>
 
               <button 
