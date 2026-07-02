@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useMemo } from "react";
-import { FaCalendarAlt, FaChevronLeft, FaChevronRight, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
+import { FaCalendarAlt, FaChevronLeft, FaChevronRight, FaPhoneAlt, FaEnvelope, FaFileAlt } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -194,6 +194,14 @@ const CalendarView = () => {
                               <span className="text-[10px] px-1 py-0.5 mt-0.5 rounded inline-block w-fit uppercase font-semibold" style={{ backgroundColor: `${themeColors.primary}10`, color: themeColors.primary }}>
                                 {evt.status}
                               </span>
+                              {evt.meetingNote && (
+                                <div className="mt-1 p-1 rounded bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[9px]">
+                                  <span className="flex items-center gap-1 font-bold mb-0.5" style={{ color: themeColors.textSecondary }}>
+                                    <FaFileAlt size={8} /> Note:
+                                  </span>
+                                  <span style={{ color: themeColors.text }} className="line-clamp-2">{evt.meetingNote}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
