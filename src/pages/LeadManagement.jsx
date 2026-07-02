@@ -1,4 +1,5 @@
 import { memo, useState, useEffect } from "react";
+import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
   FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, 
@@ -12,6 +13,8 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 
 const LeadManagement = () => {
+  const [waModalLead, setWaModalLead] = useState(null);
+
   const { themeColors } = useTheme();
   const { token } = useAuth();
 
@@ -466,11 +469,11 @@ const LeadManagement = () => {
                       {lead.integrations && (
                         <div className="flex gap-2 mt-2">
                           {lead.integrations.whatsappLink && (
-                            <a href={lead.integrations.whatsappLink} target="_blank" rel="noreferrer" 
+                            <button onClick={() => setWaModalLead(lead)} 
                                className="text-[#25D366] hover:scale-110 transition-transform p-1 rounded-full bg-[#25D366]/10"
                                title="Chat on WhatsApp">
                               <FaWhatsapp />
-                            </a>
+                            </button>
                           )}
                           {lead.integrations.callUri && (
                             <a href={lead.integrations.callUri} 
@@ -980,6 +983,7 @@ const LeadManagement = () => {
           </div>
         </div>
       )}
+      <WhatsAppChooserModal link={waModalLead?.integrations?.whatsappLink} phone={waModalLead?.phone} isOpen={!!waModalLead} onClose={() => setWaModalLead(null)} />
     </div>
   );
 };
