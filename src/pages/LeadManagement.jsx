@@ -28,6 +28,7 @@ const LeadManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTag, setFilterTag] = useState("");
+  const [filterDate, setFilterDate] = useState("");
 
   // Modals & States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -95,7 +96,7 @@ const LeadManagement = () => {
       fetchLeads();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filterTag, currentPage, token]);
+  }, [searchTerm, filterTag, filterDate, currentPage, token]);
 
   useEffect(() => {
     const phone = newLead.phone?.trim();
@@ -146,6 +147,7 @@ const LeadManagement = () => {
       };
       
       if (searchTerm) params.search = searchTerm;
+      if (filterDate) params.createdAt = filterDate;
       if (filterTag) {
         const knownStatuses = ['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed', 'call_done'];
         if (knownStatuses.includes(filterTag.toLowerCase())) {
@@ -428,6 +430,18 @@ const LeadManagement = () => {
                 <option key={tag} value={tag}>{tag}</option>
               ))}
             </select>
+          </div>
+          <div className="relative w-48">
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => {
+                setFilterDate(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            />
           </div>
         </div>
       </div>
