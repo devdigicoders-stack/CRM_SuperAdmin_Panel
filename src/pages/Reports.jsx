@@ -288,8 +288,8 @@ const Reports = () => {
         </div>
       ) : currentData ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Lead KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
               <div className="flex justify-between items-start">
                 <div>
@@ -326,13 +326,17 @@ const Reports = () => {
               </div>
             </div>
 
+          </div>
+
+          {/* Financial KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
                   <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Total Deal Value</p>
                   <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                    ₹{currentData.totalDealValue.toLocaleString('en-IN')}
+                    ₹{currentData.totalDealValue?.toLocaleString('en-IN') || 0}
                   </h3>
                 </div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
@@ -340,10 +344,40 @@ const Reports = () => {
                 </div>
               </div>
             </div>
+
+            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-bl-full -mr-10 -mt-10"></div>
+              <div className="flex justify-between items-start relative z-10">
+                <div>
+                  <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Amount Paid</p>
+                  <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    ₹{currentData.totalAmountPaid?.toLocaleString('en-IN') || 0}
+                  </h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                  <FaRupeeSign className="text-2xl" />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-bl-full -mr-10 -mt-10"></div>
+              <div className="flex justify-between items-start relative z-10">
+                <div>
+                  <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Amount Pending</p>
+                  <h3 className="text-3xl font-bold text-rose-600 dark:text-rose-400">
+                    ₹{currentData.totalAmountPending?.toLocaleString('en-IN') || 0}
+                  </h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+                  <FaRupeeSign className="text-2xl" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Installation KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
