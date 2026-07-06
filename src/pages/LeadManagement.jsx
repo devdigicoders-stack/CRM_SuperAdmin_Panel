@@ -33,7 +33,7 @@ const LeadManagement = () => {
   // Modals & States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [newLead, setNewLead] = useState({ name: "", phone: "", email: "", source: "", priority: "" });
+  const [newLead, setNewLead] = useState({ name: "", phone: "", email: "", source: "", priority: "", assignedTo: "" });
   const [settings, setSettings] = useState({ leadSources: [], priorities: [] });
   const [phoneConflict, setPhoneConflict] = useState(null);
 
@@ -192,7 +192,7 @@ const LeadManagement = () => {
       if (response.data.status === "success") {
         toast.success("Lead created successfully!");
         setIsAddModalOpen(false);
-        setNewLead({ name: "", phone: "", email: "", source: "", priority: "" });
+        setNewLead({ name: "", phone: "", email: "", source: "", priority: "", assignedTo: "" });
         setPhoneConflict(null);
         fetchLeads(); // Refresh leads
       }
@@ -775,6 +775,26 @@ const LeadManagement = () => {
                       <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" style={{ color: themeColors.textSecondary }}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                       </div>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-1.5" style={{ color: themeColors.text }}>Assign To (Optional)</label>
+                  <div className="relative">
+                    <select 
+                      value={newLead.assignedTo || ""} onChange={(e) => setNewLead({...newLead, assignedTo: e.target.value})}
+                      className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-colors appearance-none"
+                      style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                    >
+                      <option value="">Do not assign yet</option>
+                      {staffList.map(staff => (
+                        <option key={staff._id} value={staff._id}>{staff.name} ({staff.role})</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" style={{ color: themeColors.textSecondary }}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                   </div>
                 </div>
