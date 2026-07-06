@@ -777,7 +777,6 @@ const LeadManagement = () => {
                       </div>
                     </div>
                   </div>
-                  </div>
                 </div>
 
                 <div>
