@@ -196,7 +196,6 @@ const MissedFollowUps = () => {
         </div>
       )}
     </div>
-    </div>
   );
 };
 
