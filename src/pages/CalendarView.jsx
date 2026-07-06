@@ -289,6 +289,15 @@ const CalendarView = () => {
                         {evt.meetingNote}
                       </div>
                     )}
+                    <div className="mt-3 flex justify-end">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setSelectedEventForRemark(evt); }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition-transform hover:scale-105"
+                        style={{ backgroundColor: themeColors.primary }}
+                      >
+                        Update Lead
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
