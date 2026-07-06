@@ -15,6 +15,10 @@ const CalendarView = () => {
   const [selectedDayEvents, setSelectedDayEvents] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
 
+  const [selectedEventForRemark, setSelectedEventForRemark] = useState(null);
+  const [remarkData, setRemarkData] = useState({ note: '', status: '', followUpDate: '' });
+  const [isSubmittingRemark, setIsSubmittingRemark] = useState(false);
+
   // Derive start and end dates for the current month
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59);
@@ -23,6 +27,21 @@ const CalendarView = () => {
     if (!token) return;
     fetchEvents();
   }, [currentDate, token]);
+
+  useEffect(() => {
+    if (selectedEventForRemark) {
+      let tzDate = '';
+      if (selectedEventForRemark.followUpDate) {
+        const d = new Date(selectedEventForRemark.followUpDate);
+        tzDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      }
+      setRemarkData({
+        note: '',
+        status: selectedEventForRemark.status || 'new',
+        followUpDate: tzDate
+      });
+    }
+  }, [selectedEventForRemark]);
 
   const fetchEvents = async () => {
     setIsLoading(true);
@@ -44,6 +63,40 @@ const CalendarView = () => {
       toast.error("Failed to load calendar events.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddRemark = async (e) => {
+    e.preventDefault();
+    if (!remarkData.note.trim()) return toast.error("Remark note is required");
+    
+    setIsSubmittingRemark(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const payload = {
+        note: remarkData.note,
+        status: remarkData.status
+      };
+      
+      if (remarkData.followUpDate) {
+        payload.followUpDate = new Date(remarkData.followUpDate).toISOString();
+      }
+
+      const response = await axios.post(`${baseUrl}/leads/${selectedEventForRemark._id}/remarks`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.status === "success") {
+        toast.success("Lead updated successfully!");
+        setSelectedEventForRemark(null);
+        setSelectedDayEvents(null); // Close the day modal to refresh cleanly
+        fetchEvents(); // Refresh calendar
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to update lead");
+    } finally {
+      setIsSubmittingRemark(false);
     }
   };
 
@@ -206,7 +259,8 @@ const CalendarView = () => {
               {selectedDayEvents.map(evt => (
                 <div 
                   key={evt._id} 
-                  className="p-4 rounded-xl border text-sm shadow-sm transition-all"
+                  onClick={() => setSelectedEventForRemark(evt)}
+                  className="p-4 rounded-xl border text-sm shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500"
                   style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -239,6 +293,83 @@ const CalendarView = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Lead / Add Remark Modal */}
+      {selectedEventForRemark && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div 
+            className="w-full max-w-md flex flex-col rounded-xl shadow-2xl overflow-hidden"
+            style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border, borderWidth: '1px' }}
+          >
+            <div className="flex justify-between items-center p-4 border-b shrink-0" style={{ borderColor: themeColors.border }}>
+              <h2 className="text-lg font-bold" style={{ color: themeColors.text }}>
+                Update Lead
+              </h2>
+              <button onClick={() => setSelectedEventForRemark(null)} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="px-4 py-3 border-b bg-black/5 dark:bg-white/5" style={{ borderColor: themeColors.border }}>
+               <h3 className="font-bold truncate" style={{ color: themeColors.text }}>{selectedEventForRemark.name}</h3>
+               <p className="text-xs mt-0.5" style={{ color: themeColors.textSecondary }}>{selectedEventForRemark.phone}</p>
+            </div>
+
+            <form onSubmit={handleAddRemark} className="p-4 space-y-4 overflow-y-auto max-h-[60vh] custom-scrollbar">
+              <div>
+                <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Status</label>
+                <select 
+                  className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                  style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                  value={remarkData.status}
+                  onChange={e => setRemarkData({...remarkData, status: e.target.value})}
+                >
+                  <option value="new">New</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="in_process">In Process</option>
+                  <option value="interested">Interested</option>
+                  <option value="not_interested">Not Interested</option>
+                  <option value="call_done">Call Done</option>
+                  <option value="converted">Converted</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Next Follow-up (Optional)</label>
+                <input 
+                  type="datetime-local" 
+                  className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                  style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                  value={remarkData.followUpDate}
+                  onChange={e => setRemarkData({...remarkData, followUpDate: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Remark Note <span className="text-red-500">*</span></label>
+                <textarea 
+                  required
+                  className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-all min-h-[100px] resize-none"
+                  style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                  placeholder="Enter conversation details..."
+                  value={remarkData.note}
+                  onChange={e => setRemarkData({...remarkData, note: e.target.value})}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setSelectedEventForRemark(null)} className="px-4 py-2 rounded-lg font-bold transition-all border" style={{ borderColor: themeColors.border, color: themeColors.text }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={isSubmittingRemark} className="px-4 py-2 rounded-lg font-bold text-white transition-all shadow-md hover:shadow-lg disabled:opacity-70" style={{ backgroundColor: themeColors.primary }}>
+                  {isSubmittingRemark ? 'Saving...' : 'Save & Update'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
