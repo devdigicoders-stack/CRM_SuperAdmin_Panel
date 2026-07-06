@@ -152,7 +152,7 @@ const CalendarView = () => {
               return (
                 <div 
                   key={idx} 
-                  className={`min-h-[120px] p-2 transition-colors ${day ? 'hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
+                  className={`h-[150px] md:h-[180px] p-2 transition-colors ${day ? 'hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
                   style={{ backgroundColor: themeColors.surface }}
                 >
                   {day && (
@@ -193,6 +193,9 @@ const CalendarView = () => {
                               </span>
                               <span className="text-[10px] px-1 py-0.5 mt-0.5 rounded inline-block w-fit uppercase font-semibold" style={{ backgroundColor: `${themeColors.primary}10`, color: themeColors.primary }}>
                                 {evt.status}
+                              </span>
+                              <span className="text-[9px] mt-0.5 truncate" style={{ color: themeColors.textSecondary }}>
+                                By: {evt.assignedTo?.name || evt.createdBy?.name || 'System'}
                               </span>
                               {evt.meetingNote && (
                                 <div className="mt-1 p-1 rounded bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[9px]">

@@ -23,6 +23,9 @@ const Reports = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [activeTimeframe, setActiveTimeframe] = useState("thisMonth");
 
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -59,29 +62,44 @@ const Reports = () => {
     }
   };
 
+  const fetchReports = async () => {
+    setIsFetching(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const params = new URLSearchParams();
+      if (filterStartDate) params.append("startDate", filterStartDate);
+      if (filterEndDate) params.append("endDate", filterEndDate);
+
+      const res = await axios.get(`${baseUrl}/reports/analytics?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.data.status === "success") {
+        setReportsData(res.data.data);
+        if (filterStartDate || filterEndDate) {
+          setActiveTimeframe("custom");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch reports data", err);
+      toast.error("Failed to load analytics reports");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
-    const fetchReports = async () => {
-      setIsFetching(true);
-      try {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL;
-        const res = await axios.get(`${baseUrl}/reports/analytics`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (res.data.status === "success") {
-          setReportsData(res.data.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch reports data", err);
-        toast.error("Failed to load analytics reports");
-      } finally {
-        setIsFetching(false);
-      }
-    };
-
     fetchReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  const availableTimeframes = useMemo(() => {
+    if (reportsData && reportsData.custom) {
+      return [...TIMEFRAMES, { id: "custom", label: "Custom Range", icon: FaFilter }];
+    }
+    return TIMEFRAMES;
+  }, [reportsData]);
 
   const currentData = useMemo(() => {
     if (!reportsData) return null;
@@ -257,27 +275,56 @@ const Reports = () => {
         </button>
       </div>
 
-      {/* Timeframe Selector */}
-      <div className="mb-8 overflow-x-auto pb-2 custom-scrollbar">
-        <div className="flex gap-2 min-w-max p-1 bg-black/5 dark:bg-white/5 rounded-xl border w-max" style={{ borderColor: themeColors.border }}>
-          {TIMEFRAMES.map((tf) => {
-            const isActive = activeTimeframe === tf.id;
-            return (
-              <button
-                key={tf.id}
-                onClick={() => setActiveTimeframe(tf.id)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all"
-                style={{
-                  backgroundColor: isActive ? themeColors.surface : 'transparent',
-                  color: isActive ? themeColors.primary : themeColors.textSecondary,
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                }}
-              >
-                <tf.icon className={isActive ? "text-primary" : "opacity-70"} />
-                {tf.label}
-              </button>
-            );
-          })}
+      {/* Timeframe Selector & Custom Filter */}
+      <div className="mb-8 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+        <div className="overflow-x-auto pb-2 custom-scrollbar">
+          <div className="flex gap-2 min-w-max p-1 bg-black/5 dark:bg-white/5 rounded-xl border w-max" style={{ borderColor: themeColors.border }}>
+            {availableTimeframes.map((tf) => {
+              const isActive = activeTimeframe === tf.id;
+              return (
+                <button
+                  key={tf.id}
+                  onClick={() => setActiveTimeframe(tf.id)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all"
+                  style={{
+                    backgroundColor: isActive ? themeColors.surface : 'transparent',
+                    color: isActive ? themeColors.primary : themeColors.textSecondary,
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
+                >
+                  <tf.icon className={isActive ? "text-primary" : "opacity-70"} />
+                  {tf.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 p-1 rounded-xl border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.surface }}>
+          <input 
+            type="date" 
+            value={filterStartDate} 
+            onChange={(e) => setFilterStartDate(e.target.value)}
+            className="p-2 text-sm rounded-lg border outline-none"
+            style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            title="Start Date"
+          />
+          <span className="text-xs font-bold" style={{ color: themeColors.textSecondary }}>to</span>
+          <input 
+            type="date" 
+            value={filterEndDate} 
+            onChange={(e) => setFilterEndDate(e.target.value)}
+            className="p-2 text-sm rounded-lg border outline-none"
+            style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            title="End Date"
+          />
+          <button
+            onClick={fetchReports}
+            className="px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90"
+            style={{ backgroundColor: themeColors.primary, color: "#fff" }}
+          >
+            Apply Filter
+          </button>
         </div>
       </div>
 
