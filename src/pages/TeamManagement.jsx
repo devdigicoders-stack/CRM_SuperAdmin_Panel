@@ -1,10 +1,12 @@
 import { memo, useState } from "react";
-import { FaPlus, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 
 const TeamManagement = () => {
   const { themeColors } = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Static data for demonstration
   const teamMembers = [
@@ -180,29 +182,39 @@ const TeamManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: themeColors.text }}>Password</label>
-                  <input 
-                    type="password" 
-                    placeholder="Enter password"
-                    className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors"
-                    style={{ 
-                      backgroundColor: themeColors.background, 
-                      borderColor: themeColors.border,
-                      color: themeColors.text,
-                    }}
-                  />
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="Enter password"
+                      className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors pr-10"
+                      style={{ 
+                        backgroundColor: themeColors.background, 
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      }}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: themeColors.text }}>Confirm Password</label>
-                  <input 
-                    type="password" 
-                    placeholder="Confirm password"
-                    className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors"
-                    style={{ 
-                      backgroundColor: themeColors.background, 
-                      borderColor: themeColors.border,
-                      color: themeColors.text,
-                    }}
-                  />
+                  <div className="relative">
+                    <input 
+                      type={showConfirm ? "text" : "password"} 
+                      placeholder="Confirm password"
+                      className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors pr-10"
+                      style={{ 
+                        backgroundColor: themeColors.background, 
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      }}
+                    />
+                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div>

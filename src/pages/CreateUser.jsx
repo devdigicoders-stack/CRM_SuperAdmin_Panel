@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { FaUserPlus, FaTimes, FaEdit, FaTrash, FaUsers, FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaEye } from "react-icons/fa";
+import { FaUserPlus, FaTimes, FaEdit, FaTrash, FaUsers, FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const ROLES = [
   { id: "accountant", label: "Accountant" },
@@ -33,6 +33,7 @@ const CreateUser = () => {
   // Create Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // View Details Modal State
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -527,12 +528,17 @@ const CreateUser = () => {
 
                   <div>
                     <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Password *</label>
-                    <input 
-                      type="password" name="password" value={formData.password} onChange={handleChange} required minLength={6}
-                      placeholder="••••••••"
-                      className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-2 shadow-sm"
-                      style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required minLength={6}
+                        placeholder="••••••••"
+                        className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-2 shadow-sm"
+                        style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">
