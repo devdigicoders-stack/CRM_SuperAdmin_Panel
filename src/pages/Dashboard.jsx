@@ -20,6 +20,28 @@ const Dashboard = () => {
   const [performanceData, setPerformanceData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  const [perfStartDate, setPerfStartDate] = useState("");
+  const [perfEndDate, setPerfEndDate] = useState("");
+  const [isPerfLoading, setIsPerfLoading] = useState(false);
+
+  const fetchPerformanceData = async () => {
+    try {
+      setIsPerfLoading(true);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const params = new URLSearchParams();
+      if(perfStartDate) params.append("startDate", perfStartDate);
+      if(perfEndDate) params.append("endDate", perfEndDate);
+      const perfResponse = await axios.get(`${baseUrl}/dashboard/performance?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: {} }));
+      if (perfResponse.data?.status === "success") {
+        setPerformanceData(perfResponse.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch performance", err);
+    } finally {
+      setIsPerfLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -27,22 +49,13 @@ const Dashboard = () => {
         setIsLoading(true);
         const baseUrl = import.meta.env.VITE_API_BASE_URL;
         
-        // Fetch both Stats and Performance in parallel
-        const [statsResponse, perfResponse] = await Promise.all([
-          axios.get(`${baseUrl}/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${baseUrl}/dashboard/performance`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: {} })) // Prevent total failure if perf fails
-        ]);
+        const statsResponse = await axios.get(`${baseUrl}/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } });
         
         if (statsResponse.data.status === "success") {
           setData(statsResponse.data.data);
         } else {
           setError("Failed to fetch dashboard data");
         }
-        
-        if (perfResponse.data?.status === "success") {
-          setPerformanceData(perfResponse.data.data);
-        }
-        
       } catch (err) {
         console.error(err);
         setError(err.response?.data?.message || "Error connecting to server");
@@ -53,7 +66,9 @@ const Dashboard = () => {
     
     if (token) {
       fetchDashboardData();
+      fetchPerformanceData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const stats = useMemo(() => {
@@ -276,10 +291,35 @@ const Dashboard = () => {
           className="rounded-xl shadow-sm border overflow-hidden mt-6"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
         >
-          <div className="p-6 border-b flex justify-between items-center" style={{ borderColor: themeColors.border }}>
+          <div className="p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" style={{ borderColor: themeColors.border }}>
             <div>
               <h3 className="text-lg font-bold" style={{ color: themeColors.text }}>Team Performance</h3>
               <p className="text-sm" style={{ color: themeColors.textSecondary }}>Real-time conversion metrics for your team</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <input 
+                type="date" 
+                value={perfStartDate} 
+                onChange={(e) => setPerfStartDate(e.target.value)}
+                className="p-2 border rounded-lg text-sm"
+                style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+              />
+              <span style={{ color: themeColors.textSecondary }}>to</span>
+              <input 
+                type="date" 
+                value={perfEndDate} 
+                onChange={(e) => setPerfEndDate(e.target.value)}
+                className="p-2 border rounded-lg text-sm"
+                style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+              />
+              <button 
+                onClick={fetchPerformanceData}
+                disabled={isPerfLoading}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary, opacity: isPerfLoading ? 0.7 : 1 }}
+              >
+                {isPerfLoading ? "Filtering..." : "Filter"}
+              </button>
             </div>
           </div>
           <div className="overflow-x-auto">
