@@ -33,7 +33,7 @@ const LeadManagement = () => {
   // Modals & States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [newLead, setNewLead] = useState({ name: "", phone: "", email: "", source: "", priority: "", assignedTo: "" });
+  const [newLead, setNewLead] = useState({ name: "", phone: "", email: "", address: "", source: "", priority: "", assignedTo: "" });
   const [settings, setSettings] = useState({ leadSources: [], priorities: [] });
   const [phoneConflict, setPhoneConflict] = useState(null);
 
@@ -192,7 +192,7 @@ const LeadManagement = () => {
       if (response.data.status === "success") {
         toast.success("Lead created successfully!");
         setIsAddModalOpen(false);
-        setNewLead({ name: "", phone: "", email: "", source: "", priority: "", assignedTo: "" });
+        setNewLead({ name: "", phone: "", email: "", address: "", source: "", priority: "", assignedTo: "" });
         setPhoneConflict(null);
         fetchLeads(); // Refresh leads
       }
@@ -738,6 +738,15 @@ const LeadManagement = () => {
                     <input 
                       type="email" placeholder="e.g. email@example.com"
                       value={newLead.email} onChange={(e) => setNewLead({...newLead, email: e.target.value})}
+                      className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-colors"
+                      style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1.5" style={{ color: themeColors.text }}>Address</label>
+                    <input 
+                      type="text" placeholder="e.g. 123 Main St"
+                      value={newLead.address || ''} onChange={(e) => setNewLead({...newLead, address: e.target.value})}
                       className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-colors"
                       style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
                     />
