@@ -150,7 +150,9 @@ const LeadManagement = () => {
       if (filterDate) params.createdAt = filterDate;
       if (filterTag) {
         const knownStatuses = ['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed', 'call_done'];
-        if (knownStatuses.includes(filterTag.toLowerCase())) {
+        if (filterTag.toLowerCase() === 'unassigned') {
+          params.assignedTo = 'unassigned';
+        } else if (knownStatuses.includes(filterTag.toLowerCase())) {
           params.status = filterTag.toLowerCase();
         } else {
           params.tag = filterTag;
@@ -425,7 +427,8 @@ const LeadManagement = () => {
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm appearance-none cursor-pointer"
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             >
-              <option value="">All Tags</option>
+              <option value="">All Leads</option>
+              <option value="unassigned" style={{ color: themeColors.primary, fontWeight: 'bold' }}>Unassigned Leads</option>
               {settings?.leadTags?.map(tag => (
                 <option key={tag} value={tag}>{tag}</option>
               ))}
