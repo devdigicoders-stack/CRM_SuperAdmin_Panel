@@ -231,6 +231,23 @@ const UserHistory = () => {
             </div>
           </div>
         </div>
+
+        <div 
+          className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1" 
+          style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Total Call Done</p>
+              <h3 className="text-2xl font-bold" style={{ color: themeColors.text }}>
+                {performanceData.reduce((acc, curr) => acc + (curr.statistics?.callDoneLeads || 0), 0)}
+              </h3>
+            </div>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+              <FaHistory className="text-xl" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* History Table */}
@@ -244,8 +261,9 @@ const UserHistory = () => {
               <tr style={{ backgroundColor: `${themeColors.primary}08`, borderBottom: `1px solid ${themeColors.border}` }}>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>User Details</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Total Assigned Leads</th>
-                <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Work Done (Remarks Added)</th>
-                <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Pending Leads</th>
+                <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Calls Made (Remarks)</th>
+                <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Pending Calls</th>
+                <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Call Done</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Converted Leads</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Conversion Rate</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Actions</th>
@@ -254,7 +272,7 @@ const UserHistory = () => {
             <tbody>
               {isFetching ? (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center">
+                  <td colSpan="8" className="py-12 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 mx-auto" style={{ borderColor: themeColors.primary }}></div>
                   </td>
                 </tr>
@@ -262,6 +280,7 @@ const UserHistory = () => {
                 const totalLeads = item.statistics?.totalLeads || 0;
                 const workDone = item.statistics?.totalRemarks || 0;
                 const pendingLeads = item.statistics?.pendingLeads || 0;
+                const callDoneLeads = item.statistics?.callDoneLeads || 0;
                 const convertedLeads = item.statistics?.convertedLeads || 0;
                 const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0;
 
@@ -290,12 +309,17 @@ const UserHistory = () => {
                     </td>
                     <td className="py-4 px-5">
                       <div className="font-bold text-base" style={{ color: themeColors.text }}>
-                        {workDone} <span className="text-xs font-normal" style={{ color: themeColors.textSecondary }}>Remarks</span>
+                        {workDone} <span className="text-xs font-normal" style={{ color: themeColors.textSecondary }}>Calls/Remarks</span>
                       </div>
                     </td>
                     <td className="py-4 px-5">
                       <div className="font-bold text-base" style={{ color: pendingLeads > 0 ? themeColors.warning : themeColors.success }}>
                         {pendingLeads} <span className="text-xs font-normal" style={{ color: themeColors.textSecondary }}>Pending</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="font-bold text-base" style={{ color: themeColors.primary }}>
+                        {callDoneLeads} <span className="text-xs font-normal" style={{ color: themeColors.textSecondary }}>Done</span>
                       </div>
                     </td>
                     <td className="py-4 px-5">
@@ -334,7 +358,7 @@ const UserHistory = () => {
                 );
               }) : (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center">
+                  <td colSpan="8" className="py-12 text-center">
                     <p className="font-medium" style={{ color: themeColors.textSecondary }}>No user history data found.</p>
                   </td>
                 </tr>
