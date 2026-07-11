@@ -1,4 +1,5 @@
 import { memo, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 
 const LeadManagement = () => {
+  const location = useLocation();
   const [waModalLead, setWaModalLead] = useState(null);
 
   const { themeColors } = useTheme();
@@ -27,7 +29,7 @@ const LeadManagement = () => {
   const limit = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterTag, setFilterTag] = useState("");
+  const [filterTag, setFilterTag] = useState(location.state?.filterTag || "");
   const [filterDate, setFilterDate] = useState("");
 
   // Modals & States

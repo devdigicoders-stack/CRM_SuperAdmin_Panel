@@ -73,9 +73,11 @@ const Dashboard = () => {
 
   const stats = useMemo(() => {
     if (!data) return [];
+    const unassignedCount = data.totalLeads - data.assignedLeads;
     return [
       { title: "Total Leads", value: data.totalLeads || 0, icon: FaUsers, isPositive: true },
       { title: "Assigned Leads", value: data.assignedLeads || 0, icon: FaChartLine, isPositive: true },
+      { title: "Unassigned Leads", value: unassignedCount > 0 ? unassignedCount : 0, icon: FaUsers, isPositive: false, path: "/leads", state: { filterTag: "unassigned" } },
       { title: "Today's Reminders", value: data.todayReminders || 0, icon: FaBell, isPositive: true },
       { title: "Missed Follow-Ups", value: data.missedFollowUps || 0, icon: FaExclamationTriangle, isPositive: false, path: "/missed-follow-ups" },
     ];
@@ -151,11 +153,11 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {stats.map((stat, index) => (
           <div 
             key={index}
-            onClick={() => stat.path ? navigate(stat.path) : null}
+            onClick={() => stat.path ? navigate(stat.path, { state: stat.state }) : null}
             className={`rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${stat.path ? 'cursor-pointer' : ''}`}
             style={{ 
               backgroundColor: themeColors.surface,
