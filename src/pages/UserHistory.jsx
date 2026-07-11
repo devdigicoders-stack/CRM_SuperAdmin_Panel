@@ -11,6 +11,8 @@ const UserHistory = () => {
   const [performanceData, setPerformanceData] = useState([]);
   const [isFetching, setIsFetching] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
@@ -19,29 +21,38 @@ const UserHistory = () => {
   const [isFetchingLeads, setIsFetchingLeads] = useState(false);
   const [isLeadsModalOpen, setIsLeadsModalOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchPerformance = async () => {
     if (!token) return;
-    const fetchPerformance = async () => {
-      setIsFetching(true);
-      try {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL;
-        const res = await axios.get(`${baseUrl}/users/tracking/summary`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (res.data.status === "success") {
-          setPerformanceData(res.data.data.users || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch performance data", err);
-        toast.error("Failed to load user history");
-      } finally {
-        setIsFetching(false);
+    setIsFetching(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      let query = "";
+      if (startDate && endDate) {
+        query = `?startDate=${startDate}&endDate=${endDate}`;
+      } else if (startDate) {
+        query = `?startDate=${startDate}`;
+      } else if (endDate) {
+        query = `?endDate=${endDate}`;
       }
-    };
 
+      const res = await axios.get(`${baseUrl}/users/tracking/summary${query}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.data.status === "success") {
+        setPerformanceData(res.data.data.users || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch performance data", err);
+      toast.error("Failed to load user history");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPerformance();
-  }, [token]);
+  }, [token, startDate, endDate]);
 
   const fetchUserHistory = async (userId) => {
     setIsLeadsModalOpen(true);
@@ -50,7 +61,16 @@ const UserHistory = () => {
     setActiveTab("activity");
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const res = await axios.get(`${baseUrl}/users/${userId}/history`, {
+      let query = "";
+      if (startDate && endDate) {
+        query = `?startDate=${startDate}&endDate=${endDate}`;
+      } else if (startDate) {
+        query = `?startDate=${startDate}`;
+      } else if (endDate) {
+        query = `?endDate=${endDate}`;
+      }
+      
+      const res = await axios.get(`${baseUrl}/users/${userId}/history${query}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.status === "success") {
@@ -99,9 +119,9 @@ const UserHistory = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Search and Filter Bar */}
       <div 
-        className="mb-6 p-4 rounded-xl border flex shadow-sm"
+        className="mb-6 p-4 rounded-xl border flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm"
         style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
       >
         <div className="relative w-full max-w-md">
@@ -114,6 +134,33 @@ const UserHistory = () => {
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
             style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
           />
+        </div>
+        
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
+            style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+          />
+          <span style={{ color: themeColors.textSecondary }}>to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
+            style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+          />
+          {(startDate || endDate) && (
+             <button
+                onClick={() => { setStartDate(""); setEndDate(""); }}
+                className="ml-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+                style={{ backgroundColor: `${themeColors.danger}15`, color: themeColors.danger }}
+             >
+                Clear
+             </button>
+          )}
         </div>
       </div>
 
