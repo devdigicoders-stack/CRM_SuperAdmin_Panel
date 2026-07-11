@@ -13,6 +13,7 @@ const MissedFollowUps = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedLeadDetails, setSelectedLeadDetails] = useState(null);
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
@@ -181,7 +182,7 @@ const MissedFollowUps = () => {
                     </td>
                     <td className="py-4 px-6 text-center">
                       <button 
-                        onClick={() => navigate('/lead-management')}
+                        onClick={() => setSelectedLeadDetails(lead)}
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
                         style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
                       >
@@ -192,6 +193,119 @@ const MissedFollowUps = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Lead Details Modal */}
+      {selectedLeadDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div 
+            className="w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
+            style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border, borderWidth: '1px' }}
+          >
+            <div className="flex justify-between items-center p-5 border-b shrink-0" style={{ borderColor: themeColors.border }}>
+              <div>
+                <h2 className="text-lg font-bold" style={{ color: themeColors.text }}>Lead Details</h2>
+                <p className="text-xs mt-1" style={{ color: themeColors.textSecondary }}>
+                  Viewing details for <span className="font-bold">{selectedLeadDetails.name}</span>
+                </p>
+              </div>
+              <button onClick={() => setSelectedLeadDetails(null)} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
+                <span className="font-bold">X</span>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="text-xs uppercase font-bold" style={{ color: themeColors.textSecondary }}>Contact Info</label>
+                  <p className="text-sm mt-1" style={{ color: themeColors.text }}><FaPhone className="inline mr-2 opacity-70" /> {selectedLeadDetails.phone}</p>
+                  {selectedLeadDetails.email && <p className="text-sm mt-1" style={{ color: themeColors.text }}><FaEnvelope className="inline mr-2 opacity-70" /> {selectedLeadDetails.email}</p>}
+                </div>
+                <div>
+                  <label className="text-xs uppercase font-bold" style={{ color: themeColors.textSecondary }}>Status & Priority</label>
+                  <div className="mt-1 flex gap-2">
+                    <span className="text-xs uppercase font-semibold px-2 py-1 rounded" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+                      {selectedLeadDetails.status}
+                    </span>
+                    <span className="text-xs uppercase font-semibold px-2 py-1 rounded border" style={{ borderColor: themeColors.border, color: themeColors.text }}>
+                      {selectedLeadDetails.priority} Priority
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs uppercase font-bold" style={{ color: themeColors.textSecondary }}>Source</label>
+                  <p className="text-sm mt-1 font-medium" style={{ color: themeColors.text }}>{selectedLeadDetails.source || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs uppercase font-bold" style={{ color: themeColors.textSecondary }}>Scheduled Follow-up</label>
+                  <p className="text-sm mt-1 font-medium" style={{ color: themeColors.danger }}>
+                    <FaCalendarAlt className="inline mr-2" />
+                    {formatDate(selectedLeadDetails.followUpDate)}
+                  </p>
+                </div>
+                {selectedLeadDetails.tags && selectedLeadDetails.tags.length > 0 && (
+                  <div className="md:col-span-2">
+                    <label className="text-xs uppercase font-bold" style={{ color: themeColors.textSecondary }}>Tags</label>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {selectedLeadDetails.tags.map((tag, idx) => (
+                        <span key={idx} className="text-xs px-2 py-1 rounded-full border" style={{ borderColor: themeColors.border, color: themeColors.text }}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedLeadDetails.address && (
+                  <div className="md:col-span-2">
+                    <label className="text-xs uppercase font-bold" style={{ color: themeColors.textSecondary }}>Address</label>
+                    <p className="text-sm mt-1" style={{ color: themeColors.text }}>{selectedLeadDetails.address}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t pt-6" style={{ borderColor: themeColors.border }}>
+                <h3 className="text-md font-bold mb-4" style={{ color: themeColors.text }}>Remarks History</h3>
+                {selectedLeadDetails.remarks && selectedLeadDetails.remarks.length > 0 ? (
+                  <div className="space-y-4">
+                    {[...selectedLeadDetails.remarks].reverse().map((remark, idx) => (
+                      <div key={idx} className="relative pl-6 pb-2 border-l-2 last:border-l-0 last:pb-0" style={{ borderColor: themeColors.border }}>
+                        <div className="absolute -left-[5px] top-0 w-2 h-2 rounded-full ring-4" style={{ backgroundColor: themeColors.primary, ringColor: themeColors.surface }}></div>
+                        <div className="p-3 rounded-lg border shadow-sm" style={{ backgroundColor: themeColors.background, borderColor: themeColors.border }}>
+                          <div className="flex justify-between items-start gap-4 mb-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+                              {remark.createdAt ? new Date(remark.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Unknown Date'}
+                            </span>
+                          </div>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: themeColors.text }}>
+                            {remark.note}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="italic text-sm" style={{ color: themeColors.textSecondary }}>No remarks history available for this lead.</p>
+                )}
+              </div>
+            </div>
+            <div className="p-4 border-t flex justify-end" style={{ borderColor: themeColors.border }}>
+              <button 
+                onClick={() => navigate('/lead-management', { state: { search: selectedLeadDetails.phone } })}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90 mr-3"
+                style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
+              >
+                Go to Lead Management
+              </button>
+              <button 
+                onClick={() => setSelectedLeadDetails(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+                style={{ borderColor: themeColors.border, color: themeColors.text }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
