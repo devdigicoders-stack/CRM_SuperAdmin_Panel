@@ -19,11 +19,11 @@ const Dashboard = () => {
   const [data, setData] = useState(null);
   const [performanceData, setPerformanceData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  
+  const [isPerfLoading, setIsPerfLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filterDate, setFilterDate] = useState("");
   const [perfStartDate, setPerfStartDate] = useState("");
   const [perfEndDate, setPerfEndDate] = useState("");
-  const [isPerfLoading, setIsPerfLoading] = useState(false);
 
   const fetchPerformanceData = async () => {
     try {
@@ -49,7 +49,11 @@ const Dashboard = () => {
         setIsLoading(true);
         const baseUrl = import.meta.env.VITE_API_BASE_URL;
         
-        const statsResponse = await axios.get(`${baseUrl}/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } });
+        const url = filterDate 
+          ? `${baseUrl}/dashboard/stats?date=${filterDate}` 
+          : `${baseUrl}/dashboard/stats`;
+          
+        const statsResponse = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         
         if (statsResponse.data.status === "success") {
           setData(statsResponse.data.data);
@@ -66,9 +70,14 @@ const Dashboard = () => {
     
     if (token) {
       fetchDashboardData();
-      fetchPerformanceData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, filterDate]);
+
+  useEffect(() => {
+    if (token) {
+      fetchPerformanceData();
+    }
   }, [token]);
 
   const stats = useMemo(() => {
@@ -149,6 +158,29 @@ const Dashboard = () => {
           <p className="text-sm mt-1" style={{ color: themeColors.textSecondary }}>
             Here is the latest overview of your CRM metrics.
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <input 
+            type="date" 
+            value={filterDate} 
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-shadow"
+            style={{ 
+              backgroundColor: themeColors.background, 
+              borderColor: themeColors.border, 
+              color: themeColors.text,
+              focusRingColor: themeColors.primary
+            }}
+          />
+          {filterDate && (
+            <button 
+              onClick={() => setFilterDate("")}
+              className="text-sm font-medium hover:underline"
+              style={{ color: themeColors.danger }}
+            >
+              Clear Filter
+            </button>
+          )}
         </div>
       </div>
 
