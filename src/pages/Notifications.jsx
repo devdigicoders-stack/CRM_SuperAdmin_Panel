@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from "react";
-import { FaBell, FaCheckDouble, FaUserPlus, FaFileInvoiceDollar, FaExclamationTriangle, FaInfoCircle, FaSpinner, FaCalendarTimes } from "react-icons/fa";
+import { FaBell, FaCheckDouble, FaUserPlus, FaFileInvoiceDollar, FaExclamationTriangle, FaInfoCircle, FaSpinner, FaCalendarTimes, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -9,6 +9,7 @@ const Notifications = () => {
   const { themeColors } = useTheme();
   const { token } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const [expandedNotifs, setExpandedNotifs] = useState({});
   const [loading, setLoading] = useState(true);
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -185,6 +186,48 @@ const Notifications = () => {
                   <p className="text-sm" style={{ color: themeColors.textSecondary }}>
                     {notif.message}
                   </p>
+
+                  {notif.type === 'bulk_upload' && notif.metadata?.invalidNumbers?.length > 0 && (
+                    <div className="mt-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedNotifs(prev => ({ ...prev, [notif._id]: !prev[notif._id] }));
+                        }}
+                        className="text-xs font-semibold flex items-center gap-1 hover:opacity-80"
+                        style={{ color: themeColors.primary }}
+                      >
+                        {expandedNotifs[notif._id] ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+                        {expandedNotifs[notif._id] ? 'Hide Invalid Numbers' : `View Invalid Numbers (${notif.metadata.invalidNumbers.length})`}
+                      </button>
+                      
+                      {expandedNotifs[notif._id] && (
+                        <div 
+                          className="mt-2 text-xs border rounded overflow-hidden max-h-48 overflow-y-auto"
+                          style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}
+                        >
+                          <table className="w-full text-left">
+                            <thead style={{ backgroundColor: `${themeColors.primary}10`, color: themeColors.textSecondary }}>
+                              <tr>
+                                <th className="px-2 py-1.5 font-semibold">Row Name</th>
+                                <th className="px-2 py-1.5 font-semibold">Phone</th>
+                                <th className="px-2 py-1.5 font-semibold">Reason</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y" style={{ borderColor: themeColors.border, color: themeColors.text }}>
+                              {notif.metadata.invalidNumbers.map((inv, idx) => (
+                                <tr key={idx} className="hover:bg-black/5 dark:hover:bg-white/5">
+                                  <td className="px-2 py-1.5">{inv.rowName}</td>
+                                  <td className="px-2 py-1.5">{inv.phone}</td>
+                                  <td className="px-2 py-1.5 text-red-500">{inv.reason}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 {/* Unread Indicator Dot */}
