@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useMemo } from "react";
-import { FaChartBar, FaChartLine, FaCheckCircle, FaExclamationCircle, FaRupeeSign, FaCalendarDay, FaCalendarWeek, FaCalendarAlt, FaHistory, FaFilter, FaWrench, FaClipboardCheck, FaHourglassHalf } from "react-icons/fa";
+import { FaChartBar, FaChartLine, FaCheckCircle, FaExclamationCircle, FaRupeeSign, FaCalendarDay, FaCalendarWeek, FaCalendarAlt, FaHistory, FaFilter, FaWrench, FaClipboardCheck, FaHourglassHalf, FaTimes } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -30,6 +30,45 @@ const Reports = () => {
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Modal states for KPI details
+  const [kpiModalOpen, setKpiModalOpen] = useState(false);
+  const [selectedKpi, setSelectedKpi] = useState({ type: "", label: "" });
+  const [kpiDetailsData, setKpiDetailsData] = useState([]);
+  const [kpiDetailsLoading, setKpiDetailsLoading] = useState(false);
+
+  const handleKpiClick = async (type, label) => {
+    setSelectedKpi({ type, label });
+    setKpiModalOpen(true);
+    setKpiDetailsLoading(true);
+    setKpiDetailsData([]);
+
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const params = new URLSearchParams();
+      params.append("type", type);
+      
+      if (activeTimeframe === "custom") {
+        if (filterStartDate) params.append("startDate", filterStartDate);
+        if (filterEndDate) params.append("endDate", filterEndDate);
+      } else {
+        params.append("timeframe", activeTimeframe);
+      }
+
+      const res = await axios.get(`${baseUrl}/reports/kpi-details?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.status === "success") {
+        setKpiDetailsData(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch KPI details", err);
+      toast.error("Failed to load details");
+    } finally {
+      setKpiDetailsLoading(false);
+    }
+  };
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -337,7 +376,11 @@ const Reports = () => {
         <>
           {/* Lead KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('totalLeads', 'Total Leads')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Total Leads</p>
@@ -349,7 +392,11 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('convertedLeads', 'Converted Leads')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Converted Leads</p>
@@ -361,7 +408,11 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('pendingLeads', 'Pending Leads')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium mb-1" style={{ color: themeColors.textSecondary }}>Pending Leads</p>
@@ -377,7 +428,11 @@ const Reports = () => {
 
           {/* Financial KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('totalDealValue', 'Total Deal Value')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
@@ -392,7 +447,11 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('amountPaid', 'Amount Paid')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
@@ -407,7 +466,11 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('amountPending', 'Amount Pending')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
@@ -425,7 +488,11 @@ const Reports = () => {
 
           {/* Installation KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('totalInstallations', 'Total Installations')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
@@ -438,7 +505,11 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('completedInstallations', 'Completed Installations')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
@@ -451,7 +522,11 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <div 
+              onClick={() => handleKpiClick('pendingInstallations', 'Pending Installations')}
+              className="rounded-xl p-6 shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 relative overflow-hidden cursor-pointer" 
+              style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+            >
                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full -mr-10 -mt-10"></div>
               <div className="flex justify-between items-start relative z-10">
                 <div>
@@ -519,6 +594,85 @@ const Reports = () => {
       ) : (
         <div className="text-center py-20 rounded-xl border border-dashed" style={{ borderColor: themeColors.border }}>
           <p className="text-lg font-medium" style={{ color: themeColors.textSecondary }}>No data available to generate reports.</p>
+        </div>
+      )}
+
+      {/* KPI Details Modal */}
+      {kpiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div 
+            className="w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            style={{ backgroundColor: themeColors.surface, border: `1px solid ${themeColors.border}` }}
+          >
+            <div className="p-5 flex justify-between items-center border-b" style={{ borderColor: themeColors.border }}>
+              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: themeColors.text }}>
+                {selectedKpi.label} Details
+              </h2>
+              <button 
+                onClick={() => setKpiModalOpen(false)}
+                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                style={{ color: themeColors.textSecondary }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1 custom-scrollbar">
+              {kpiDetailsLoading ? (
+                <div className="py-20 flex flex-col items-center justify-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2" style={{ borderColor: themeColors.primary }}></div>
+                  <p className="mt-4 text-sm font-medium" style={{ color: themeColors.textSecondary }}>Loading details...</p>
+                </div>
+              ) : kpiDetailsData.length === 0 ? (
+                <div className="py-12 text-center text-sm italic" style={{ color: themeColors.textSecondary }}>
+                  No records found for this period.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border" style={{ borderColor: themeColors.border }}>
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead style={{ backgroundColor: themeColors.background, color: themeColors.textSecondary }}>
+                      <tr>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Name</th>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Phone</th>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Status</th>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Deal Value</th>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Amount Paid</th>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Pending</th>
+                        <th className="px-4 py-3 font-semibold border-b" style={{ borderColor: themeColors.border }}>Assigned To</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {kpiDetailsData.map((lead, idx) => (
+                        <tr key={lead._id || idx} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-b last:border-b-0" style={{ borderColor: themeColors.border }}>
+                          <td className="px-4 py-3 font-medium" style={{ color: themeColors.text }}>{lead.name}</td>
+                          <td className="px-4 py-3" style={{ color: themeColors.textSecondary }}>{lead.phone}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 rounded-full text-xs font-semibold capitalize" style={{ backgroundColor: `${themeColors.primary}20`, color: themeColors.primary }}>
+                              {lead.status?.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-medium text-emerald-600 dark:text-emerald-400">₹{lead.dealValue?.toLocaleString() || 0}</td>
+                          <td className="px-4 py-3 font-medium text-green-600 dark:text-green-400">₹{lead.amountPaid?.toLocaleString() || 0}</td>
+                          <td className="px-4 py-3 font-medium text-rose-600 dark:text-rose-400">₹{lead.pendingAmount?.toLocaleString() || 0}</td>
+                          <td className="px-4 py-3" style={{ color: themeColors.textSecondary }}>{lead.assignedTo?.name || 'Unassigned'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t flex justify-end" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
+              <button
+                onClick={() => setKpiModalOpen(false)}
+                className="px-6 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 text-white"
+                style={{ backgroundColor: themeColors.primary }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
