@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { X, Plus, Pencil, Trash2, Users, Building2, ChevronDown, Search } from "lucide-react";
+import { X, Plus, Pencil, Trash2, Users, Building2, Search } from "lucide-react";
 
 const BASE = import.meta.env.VITE_API_BASE_URL;
 
@@ -23,7 +23,10 @@ function BranchModal({ branch, admins, allUsers, onClose, onSaved, c }) {
   const [form, setForm] = useState({
     name:          branch?.name          || "",
     description:   branch?.description   || "",
-    branchAdmin:   branch?.branchAdmin?._id || "",
+    managerName:   branch?.branchManager?.name  || "",
+    managerEmail:  branch?.branchManager?.email || "",
+    managerPhone:  branch?.branchManager?.phone || "",
+    managerPassword: "",
     assignedUsers: branch?.assignedUsers?.map(u => u._id) || [],
   });
   const [saving, setSaving]   = useState(false);
@@ -46,6 +49,9 @@ function BranchModal({ branch, admins, allUsers, onClose, onSaved, c }) {
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Branch name is required"); return; }
+    if (!isEdit && (!form.managerName.trim() || !form.managerEmail.trim() || !form.managerPassword.trim())) {
+      toast.error("Manager name, email and password are required"); return;
+    }
     setSaving(true);
     try {
       if (isEdit) {
@@ -121,24 +127,43 @@ function BranchModal({ branch, admins, allUsers, onClose, onSaved, c }) {
             />
           </div>
 
-          {/* Branch Admin */}
+          {/* Branch Manager */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider mb-1.5"
-              style={{ color: c.textSecondary }}>Branch Admin (optional)</label>
-            <div className="relative">
-              <select
-                value={form.branchAdmin}
-                onChange={e => setForm(p => ({ ...p, branchAdmin: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition appearance-none"
+              style={{ color: c.textSecondary }}>
+              {isEdit ? "Branch Manager (leave blank to keep unchanged)" : "Branch Manager *"}
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                value={form.managerName}
+                onChange={e => setForm(p => ({ ...p, managerName: e.target.value }))}
+                placeholder="Manager Name"
+                className="w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition"
                 style={{ backgroundColor: c.background, border: `1px solid ${c.border}`, color: c.text }}
-              >
-                <option value="">— No Admin Assigned —</option>
-                {admins.map(a => (
-                  <option key={a._id} value={a._id}>{a.name} ({a.email})</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ color: c.textSecondary }} />
+              />
+              <input
+                value={form.managerEmail}
+                onChange={e => setForm(p => ({ ...p, managerEmail: e.target.value }))}
+                placeholder="Manager Email"
+                type="email"
+                className="w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition"
+                style={{ backgroundColor: c.background, border: `1px solid ${c.border}`, color: c.text }}
+              />
+              <input
+                value={form.managerPhone}
+                onChange={e => setForm(p => ({ ...p, managerPhone: e.target.value }))}
+                placeholder="Manager Phone (optional)"
+                className="w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition"
+                style={{ backgroundColor: c.background, border: `1px solid ${c.border}`, color: c.text }}
+              />
+              <input
+                value={form.managerPassword}
+                onChange={e => setForm(p => ({ ...p, managerPassword: e.target.value }))}
+                placeholder={isEdit ? "New Password (optional)" : "Password *"}
+                type="password"
+                className="w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition"
+                style={{ backgroundColor: c.background, border: `1px solid ${c.border}`, color: c.text }}
+              />
             </div>
           </div>
 
@@ -313,7 +338,7 @@ export default function BranchManagement() {
         {[
           { label: "Total Branches",  value: branches.length },
           { label: "Active",          value: branches.filter(b => b.active).length },
-          { label: "With Admin",      value: branches.filter(b => b.branchAdmin).length },
+          { label: "With Manager",    value: branches.filter(b => b.branchManager).length },
           { label: "Total Staff",     value: branches.reduce((s, b) => s + (b.assignedUsers?.length || 0), 0) },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-2xl p-5"
@@ -369,7 +394,7 @@ export default function BranchManagement() {
                         )}
                         <div className="flex items-center gap-4 mt-2 flex-wrap">
                           <span className="text-xs font-medium" style={{ color: c.textSecondary }}>
-                            👤 Admin: <span style={{ color: c.text }}>{branch.branchAdmin?.name || "—"}</span>
+                            👤 Manager: <span style={{ color: c.text }}>{branch.branchManager?.name || "—"}</span>
                           </span>
                           <span className="text-xs font-medium" style={{ color: c.textSecondary }}>
                             👥 Staff: <span style={{ color: c.text }}>{branch.assignedUsers?.length || 0}</span>
