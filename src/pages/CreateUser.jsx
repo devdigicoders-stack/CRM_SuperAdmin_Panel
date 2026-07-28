@@ -29,6 +29,9 @@ const CreateUser = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const limit = 10;
+
+  // Branches for assign dropdown
+  const [branches, setBranches] = useState([]);
   
   // Create Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,7 +58,16 @@ const CreateUser = () => {
     password: "",
     role: "accountant",
     phone: "",
+    branchId: "",
   });
+
+  const fetchBranches = async () => {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const res = await axios.get(`${baseUrl}/branches`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data.status === "success") setBranches(res.data.data.branches || []);
+    } catch (_) {}
+  };
 
   const fetchUsers = async () => {
     setIsFetching(true);
@@ -89,10 +101,10 @@ const CreateUser = () => {
 
   useEffect(() => {
     if (!token) return;
+    fetchBranches();
     const delayDebounceFn = setTimeout(() => {
       fetchUsers();
     }, 500);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, roleFilter, currentPage, token]);
 
@@ -108,7 +120,7 @@ const CreateUser = () => {
 
   const openModal = () => {
     setFormData({
-      name: "", email: "", password: "", role: "accountant", phone: ""
+      name: "", email: "", password: "", role: "accountant", phone: "", branchId: ""
     });
     setIsModalOpen(true);
   };
@@ -124,14 +136,27 @@ const CreateUser = () => {
     
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const response = await axios.post(`${baseUrl}/users`, formData, {
+      const { branchId, ...userData } = formData;
+      const response = await axios.post(`${baseUrl}/users`, userData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data.status === "success") {
-        toast.success(`Staff ${response.data.data.user.name} created successfully!`);
+        const newUser = response.data.data.user;
+        // If branch selected, assign user to that branch
+        if (branchId) {
+          const branch = branches.find(b => b._id === branchId);
+          if (branch) {
+            const updatedUsers = [...(branch.assignedUsers?.map(u => u._id || u) || []), newUser._id];
+            await axios.put(`${baseUrl}/branches/${branchId}`, { assignedUsers: updatedUsers }, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          }
+        }
+        toast.success(`Staff ${newUser.name} created successfully!`);
         setIsModalOpen(false);
-        fetchUsers(); 
+        fetchUsers();
+        fetchBranches();
       }
     } catch (err) {
       console.error(err);
@@ -541,7 +566,7 @@ const CreateUser = () => {
                     </div>
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Staff Role *</label>
                     <select 
                       name="role" value={formData.role} onChange={handleChange} required
@@ -550,6 +575,20 @@ const CreateUser = () => {
                     >
                       {ROLES.map(role => (
                         <option key={role.id} value={role.id}>{role.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Assign to Branch (optional)</label>
+                    <select 
+                      name="branchId" value={formData.branchId} onChange={handleChange}
+                      className="w-full p-2.5 rounded-lg border focus:outline-none focus:ring-2 shadow-sm appearance-none"
+                      style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
+                    >
+                      <option value="">— No Branch —</option>
+                      {branches.map(b => (
+                        <option key={b._id} value={b._id}>{b.name}</option>
                       ))}
                     </select>
                   </div>
