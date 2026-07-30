@@ -104,11 +104,15 @@ const Dashboard = () => {
 
   const leadFlowData = useMemo(() => {
     if (!data?.leadFlow) return [];
-    return [
+    const flow = [
       { name: "Calling Team", value: data.leadFlow.callingTeam || 0 },
       { name: "Sales Panel", value: data.leadFlow.salesPanel || 0 },
-      { name: "Unassigned", value: data.leadFlow.unassigned || 0 },
     ];
+    if (data.leadFlow.branchTeam) {
+      flow.push({ name: "Branch / Admin", value: data.leadFlow.branchTeam || 0 });
+    }
+    flow.push({ name: "Unassigned", value: data.leadFlow.unassigned || 0 });
+    return flow;
   }, [data]);
 
   // Combine Performance and Call Activity
