@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
-  FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, 
+  FaBullhorn, FaUserPlus, FaUser, FaTimes, FaCalendarPlus, 
   FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
   FaUpload, FaDownload, FaFileCsv
 } from "react-icons/fa";
@@ -30,6 +30,7 @@ const LeadManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTag, setFilterTag] = useState(location.state?.filterTag || "");
+  const [filterSalesMember, setFilterSalesMember] = useState("");
   const [filterDate, setFilterDate] = useState("");
 
   // Modals & States
@@ -98,7 +99,7 @@ const LeadManagement = () => {
       fetchLeads();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filterTag, filterDate, currentPage, token]);
+  }, [searchTerm, filterTag, filterSalesMember, filterDate, currentPage, token]);
 
   useEffect(() => {
     const phone = newLead.phone?.trim();
@@ -150,10 +151,13 @@ const LeadManagement = () => {
       
       if (searchTerm) params.search = searchTerm;
       if (filterDate) params.createdAt = filterDate;
+      if (filterSalesMember) {
+        params.assignedTo = filterSalesMember;
+      }
       if (filterTag) {
         const knownStatuses = ['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed', 'call_done'];
         if (filterTag.toLowerCase() === 'unassigned') {
-          params.assignedTo = 'unassigned';
+          if (!filterSalesMember) params.assignedTo = 'unassigned';
         } else if (knownStatuses.includes(filterTag.toLowerCase())) {
           params.status = filterTag.toLowerCase();
         } else {
@@ -403,8 +407,8 @@ const LeadManagement = () => {
         className="mb-6 p-4 rounded-xl border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm"
         style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
       >
-        <div className="flex w-full md:w-auto gap-4 flex-1 max-w-2xl">
-          <div className="relative flex-1">
+        <div className="flex w-full md:w-auto gap-3 flex-1 max-w-4xl flex-wrap md:flex-nowrap">
+          <div className="relative flex-1 min-w-[200px]">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: themeColors.textSecondary }} />
             <input 
               type="text" 
@@ -418,8 +422,28 @@ const LeadManagement = () => {
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             />
           </div>
-          <div className="relative w-48">
-            <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: themeColors.textSecondary }} />
+          <div className="relative w-full md:w-52">
+            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{ color: themeColors.textSecondary }} />
+            <select
+              value={filterSalesMember}
+              onChange={(e) => {
+                setFilterSalesMember(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm appearance-none cursor-pointer"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            >
+              <option value="">All Sales Members</option>
+              <option value="unassigned" style={{ color: themeColors.primary, fontWeight: 'bold' }}>Unassigned Leads</option>
+              {staffList.map(staff => (
+                <option key={staff._id} value={staff._id}>
+                  {staff.name} ({staff.role.toUpperCase()})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="relative w-full md:w-44">
+            <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{ color: themeColors.textSecondary }} />
             <select
               value={filterTag}
               onChange={(e) => {
@@ -436,7 +460,7 @@ const LeadManagement = () => {
               ))}
             </select>
           </div>
-          <div className="relative w-48">
+          <div className="relative w-full md:w-40">
             <input
               type="date"
               value={filterDate}
@@ -444,7 +468,7 @@ const LeadManagement = () => {
                 setFilterDate(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
+              className="w-full px-3 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             />
           </div>
