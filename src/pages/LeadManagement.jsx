@@ -509,7 +509,14 @@ const LeadManagement = () => {
                 >
                   <td className="py-4 px-5">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold" style={{ color: themeColors.text }}>{lead.name}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold" style={{ color: themeColors.text }}>{lead.name}</span>
+                        {lead.isReassigned && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-orange-500 text-white tracking-wide uppercase">
+                            REASSIGNED
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[11px] font-semibold mt-1 uppercase" style={{ color: getPriorityColor(lead.priority) }}>
                         {lead.priority || 'Normal'} Priority
                       </span>
