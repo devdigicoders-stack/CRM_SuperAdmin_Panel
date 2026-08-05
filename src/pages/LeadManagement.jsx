@@ -510,7 +510,12 @@ const LeadManagement = () => {
                   <td className="py-4 px-5">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold" style={{ color: themeColors.text }}>{lead.name}</span>
+                        <span 
+                          className="text-sm font-bold cursor-pointer text-blue-600 hover:underline" 
+                          onClick={() => { setHistoryLead(lead); setIsHistoryModalOpen(true); }}
+                        >
+                          {lead.name}
+                        </span>
                         {lead.isReassigned && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-orange-500 text-white tracking-wide uppercase">
                             REASSIGNED
@@ -937,14 +942,14 @@ const LeadManagement = () => {
       {isHistoryModalOpen && historyLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div 
-            className="w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh]"
+            className="w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
             style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border, borderWidth: '1px' }}
           >
             <div className="flex justify-between items-center p-5 border-b shrink-0" style={{ borderColor: themeColors.border }}>
               <div>
-                <h2 className="text-lg font-bold" style={{ color: themeColors.text }}>Remarks History</h2>
+                <h2 className="text-xl font-bold" style={{ color: themeColors.text }}>Lead Complete Information & History</h2>
                 <p className="text-xs mt-1" style={{ color: themeColors.textSecondary }}>
-                  Lead: <span className="font-bold">{historyLead.name}</span>
+                  Full profile details and timeline logs
                 </p>
               </div>
               <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
@@ -952,31 +957,123 @@ const LeadManagement = () => {
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-              {historyLead.remarks && historyLead.remarks.length > 0 ? (
-                <div className="space-y-4">
-                  {/* Reverse remarks array to show latest first */}
-                  {[...historyLead.remarks].reverse().map((remark, idx) => (
-                    <div key={idx} className="relative pl-6 pb-2 border-l-2 last:border-l-0 last:pb-0" style={{ borderColor: themeColors.border }}>
-                      <div className="absolute -left-[5px] top-0 w-2 h-2 rounded-full ring-4" style={{ backgroundColor: themeColors.primary, ringColor: themeColors.surface }}></div>
-                      <div className="p-3 rounded-lg border shadow-sm" style={{ backgroundColor: themeColors.background, borderColor: themeColors.border }}>
-                        <div className="flex justify-between items-start gap-4 mb-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
-                            {remark.createdAt ? new Date(remark.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Unknown Date'}
-                          </span>
-                        </div>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: themeColors.text }}>
-                          {remark.note}
-                        </p>
-                      </div>
+            <div className="flex-1 flex flex-col md:flex-row overflow-y-auto custom-scrollbar">
+              {/* Left Side: Complete Lead Details */}
+              <div className="w-full md:w-1/2 p-6 border-r flex flex-col gap-5 bg-black/[0.01]" style={{ borderColor: themeColors.border }}>
+                <h3 className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: themeColors.primary }}>Lead Details</h3>
+                
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Name</span>
+                    <span className="text-sm font-bold" style={{ color: themeColors.text }}>{historyLead.name}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Phone</span>
+                    <span className="text-sm font-medium" style={{ color: themeColors.text }}>{historyLead.phone}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Email</span>
+                    <span className="text-sm font-medium truncate block" style={{ color: themeColors.text }}>{historyLead.email || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Status</span>
+                    <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase inline-block" style={{ backgroundColor: `${themeColors.primary}20`, color: themeColors.primary }}>
+                      {historyLead.status?.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Priority</span>
+                    <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase inline-block bg-orange-100 text-orange-700">
+                      {historyLead.priority || 'Normal'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Source</span>
+                    <span className="text-sm font-medium" style={{ color: themeColors.text }}>{historyLead.source || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Assigned To</span>
+                    <span className="text-sm font-medium" style={{ color: themeColors.text }}>{historyLead.assignedTo?.name || 'Unassigned'}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Deal Value</span>
+                    <span className="text-sm font-bold text-emerald-600">₹{historyLead.dealValue?.toLocaleString() || 0}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Amount Paid</span>
+                    <span className="text-sm font-bold text-green-600">₹{historyLead.amountPaid?.toLocaleString() || 0}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Amount Pending</span>
+                    <span className="text-sm font-bold text-rose-600">₹{historyLead.pendingAmount?.toLocaleString() || historyLead.pendingAmount === 0 ? historyLead.pendingAmount : (historyLead.dealValue - historyLead.amountPaid || 0)}</span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Expected Delivery</span>
+                    <span className="text-sm font-medium" style={{ color: themeColors.text }}>{historyLead.expectedDeliveryDate ? new Date(historyLead.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Address</span>
+                    <span className="text-xs font-medium leading-relaxed block whitespace-pre-wrap" style={{ color: themeColors.text }}>{historyLead.address || 'No address details provided.'}</span>
+                  </div>
+                  {historyLead.installationProofUrl && (
+                    <div className="col-span-2">
+                      <span className="block font-semibold opacity-75 mb-1.5" style={{ color: themeColors.textSecondary }}>Installation Proof</span>
+                      <a href={`${import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')}${historyLead.installationProofUrl}`} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={`${import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')}${historyLead.installationProofUrl}`} 
+                          alt="Proof" 
+                          className="w-24 h-24 object-cover rounded border hover:scale-105 transition-transform"
+                        />
+                      </a>
                     </div>
-                  ))}
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="italic" style={{ color: themeColors.textSecondary }}>No remarks history available for this lead.</p>
+              </div>
+
+              {/* Right Side: Remarks History */}
+              <div className="w-full md:w-1/2 p-6 flex flex-col gap-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: themeColors.primary }}>Remarks History</h3>
+                
+                <div className="flex-1 overflow-y-auto max-h-[50vh] pr-2 custom-scrollbar">
+                  {historyLead.remarks && historyLead.remarks.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* Reverse remarks array to show latest first */}
+                      {[...historyLead.remarks].reverse().map((remark, idx) => (
+                        <div key={idx} className="relative pl-6 pb-2 border-l-2 last:border-l-0 last:pb-0" style={{ borderColor: themeColors.border }}>
+                          <div className="absolute -left-[5px] top-0 w-2 h-2 rounded-full ring-4" style={{ backgroundColor: themeColors.primary, ringColor: themeColors.surface }}></div>
+                          <div className="p-3 rounded-lg border shadow-sm" style={{ backgroundColor: themeColors.background, borderColor: themeColors.border }}>
+                            <div className="flex justify-between items-start gap-4 mb-2">
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+                                {remark.createdAt ? new Date(remark.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Unknown Date'}
+                              </span>
+                              {remark.addedBy && (
+                                <span className="text-[10px] font-semibold text-gray-500">By {remark.addedBy.name || remark.addedBy}</span>
+                              )}
+                            </div>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: themeColors.text }}>
+                              {remark.note}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="italic" style={{ color: themeColors.textSecondary }}>No remarks history available for this lead.</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t flex justify-end" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
+              <button
+                onClick={() => setIsHistoryModalOpen(false)}
+                className="px-6 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 text-white"
+                style={{ backgroundColor: themeColors.primary }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

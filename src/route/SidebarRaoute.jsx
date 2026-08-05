@@ -14,6 +14,7 @@ const MissedFollowUps = lazy(() => import("../pages/MissedFollowUps"));
 const UserHistory = lazy(() => import("../pages/UserHistory"));
 const Reports = lazy(() => import("../pages/Reports"));
 const BranchManagement = lazy(() => import("../pages/BranchManagement"));
+const EmployeeReports = lazy(() => import("../pages/EmployeeReports"));
 
 const routes = [
   { path: "/dashboard", component: Dashboard, name: "Dashboard", icon: FaTachometerAlt, permission: "dashboard" },
@@ -25,6 +26,7 @@ const routes = [
   { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog, permission: "global-settings" },
   { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt, permission: "calendar" },
   { path: "/reports", component: Reports, name: "Reports & Analytics", icon: FaChartLine, permission: "reports" },
+  { path: "/employee-reports", component: EmployeeReports, name: "Employee Reports", icon: FaUsers, permission: "reports" },
   { path: "/notifications", component: Notifications, name: "Notifications", icon: FaBell },
   { path: "/profile", component: Profile, name: "My Profile", icon: FaUser },
   { path: "/change-password", component: ChangePassword, name: "Change Password", icon: FaLock },
