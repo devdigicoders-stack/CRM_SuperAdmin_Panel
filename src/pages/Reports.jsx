@@ -31,6 +31,10 @@ const Reports = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Sales users state
+  const [salesUsers, setSalesUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("");
+
   // Modal states for KPI details
   const [kpiModalOpen, setKpiModalOpen] = useState(false);
   const [selectedKpi, setSelectedKpi] = useState({ type: "", label: "" });
@@ -40,6 +44,27 @@ const Reports = () => {
   // History Modal states
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [historyLead, setHistoryLead] = useState(null);
+
+  // Fetch Sales Users List
+  useEffect(() => {
+    const fetchSalesUsers = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const res = await axios.get(`${baseUrl}/users/sales-list`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.status === "success") {
+          setSalesUsers(res.data.data.users || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch sales users", err);
+        toast.error("Failed to load sales employees list");
+      }
+    };
+    if (token) {
+      fetchSalesUsers();
+    }
+  }, [token]);
 
   const handleKpiClick = async (type, label) => {
     setSelectedKpi({ type, label });
@@ -51,6 +76,9 @@ const Reports = () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const params = new URLSearchParams();
       params.append("type", type);
+      if (selectedUser) {
+        params.append("assignedTo", selectedUser);
+      }
       
       if (activeTimeframe === "custom") {
         if (filterStartDate) params.append("startDate", filterStartDate);
@@ -112,6 +140,7 @@ const Reports = () => {
       const params = new URLSearchParams();
       if (filterStartDate) params.append("startDate", filterStartDate);
       if (filterEndDate) params.append("endDate", filterEndDate);
+      if (selectedUser) params.append("assignedTo", selectedUser);
 
       const res = await axios.get(`${baseUrl}/reports/analytics?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -135,7 +164,7 @@ const Reports = () => {
     if (!token) return;
     fetchReports();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, selectedUser]);
 
   const availableTimeframes = useMemo(() => {
     if (reportsData && reportsData.custom) {
@@ -257,6 +286,30 @@ const Reports = () => {
           <p className="text-sm" style={{ color: themeColors.textSecondary }}>
             Comprehensive overview of lead generation, conversions, and team performance.
           </p>
+        </div>
+      </div>
+
+      {/* Selector Box for Sales Executive */}
+      <div className="mb-8 p-6 rounded-xl border shadow-sm" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+        <div className="flex flex-col md:flex-row items-end gap-4">
+          <div className="flex-1 w-full">
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+              Filter by Sales Executive
+            </label>
+            <select
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              className="w-full p-3 rounded-lg border outline-none text-sm font-medium"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            >
+              <option value="">All Sales Executives</option>
+              {salesUsers.map((u) => (
+                <option key={u._id} value={u._id}>
+                  {u.name} ({u.email})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
