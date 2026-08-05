@@ -14,13 +14,14 @@ import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { themeColors } = useTheme();
-  const { admin, token } = useAuth();
+  const { admin, token, logout } = useAuth();
   
   const [data, setData] = useState(null);
   const [performanceData, setPerformanceData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPerfLoading, setIsPerfLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthError, setIsAuthError] = useState(false);
   const [filterDate, setFilterDate] = useState("");
   const [perfStartDate, setPerfStartDate] = useState("");
   const [perfEndDate, setPerfEndDate] = useState("");
@@ -47,6 +48,8 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        setIsAuthError(false);
         const baseUrl = import.meta.env.VITE_API_BASE_URL;
         
         const url = filterDate 
@@ -62,7 +65,12 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error(err);
-        setError(err.response?.data?.message || "Error connecting to server");
+        if (err.response?.status === 401) {
+          setIsAuthError(true);
+          setError("Session expired. Please login again.");
+        } else {
+          setError(err.response?.data?.message || "Error connecting to server");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -143,10 +151,16 @@ const Dashboard = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-4">
         <div className="bg-red-50 text-red-500 px-6 py-4 rounded-xl border border-red-200 shadow-sm font-medium">
           {error}
         </div>
+        {isAuthError && (
+          <button onClick={logout}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition-all shadow-sm">
+            Logout
+          </button>
+        )}
       </div>
     );
   }
