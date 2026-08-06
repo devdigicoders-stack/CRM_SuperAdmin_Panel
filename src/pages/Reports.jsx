@@ -66,18 +66,15 @@ const Reports = () => {
     }
   }, [token]);
 
-  const handleKpiClick = async (type, label) => {
-    setSelectedKpi({ type, label });
-    setKpiModalOpen(true);
+  const fetchKpiDetails = useCallback(async (type, userId) => {
+    if (!type) return;
     setKpiDetailsLoading(true);
-    setKpiDetailsData([]);
-
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const params = new URLSearchParams();
       params.append("type", type);
-      if (selectedUser) {
-        params.append("assignedTo", selectedUser);
+      if (userId) {
+        params.append("assignedTo", userId);
       }
       
       if (activeTimeframe === "custom") {
@@ -100,7 +97,19 @@ const Reports = () => {
     } finally {
       setKpiDetailsLoading(false);
     }
+  }, [token, activeTimeframe, filterStartDate, filterEndDate]);
+
+  const handleKpiClick = (type, label) => {
+    setSelectedKpi({ type, label });
+    setKpiModalOpen(true);
+    setKpiDetailsData([]);
   };
+
+  useEffect(() => {
+    if (kpiModalOpen && selectedKpi.type) {
+      fetchKpiDetails(selectedKpi.type, selectedUser);
+    }
+  }, [kpiModalOpen, selectedKpi.type, selectedUser, fetchKpiDetails]);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -140,7 +149,6 @@ const Reports = () => {
       const params = new URLSearchParams();
       if (filterStartDate) params.append("startDate", filterStartDate);
       if (filterEndDate) params.append("endDate", filterEndDate);
-      if (selectedUser) params.append("assignedTo", selectedUser);
 
       const res = await axios.get(`${baseUrl}/reports/analytics?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -164,7 +172,7 @@ const Reports = () => {
     if (!token) return;
     fetchReports();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, selectedUser]);
+  }, [token]);
 
   const availableTimeframes = useMemo(() => {
     if (reportsData && reportsData.custom) {
@@ -289,29 +297,7 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Selector Box for Sales Executive */}
-      <div className="mb-8 p-6 rounded-xl border shadow-sm" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
-        <div className="flex flex-col md:flex-row items-end gap-4">
-          <div className="flex-1 w-full">
-            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
-              Filter by Sales Executive
-            </label>
-            <select
-              value={selectedUser}
-              onChange={(e) => setSelectedUser(e.target.value)}
-              className="w-full p-3 rounded-lg border outline-none text-sm font-medium"
-              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
-            >
-              <option value="">All Sales Executives</option>
-              {salesUsers.map((u) => (
-                <option key={u._id} value={u._id}>
-                  {u.name} ({u.email})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
+
 
       {/* Leads Backup & Export Panel */}
       <div className="mb-8 p-6 rounded-xl border shadow-sm animate-fade-in" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
@@ -666,7 +652,7 @@ const Reports = () => {
                 {selectedKpi.label} Details
               </h2>
               <button 
-                onClick={() => setKpiModalOpen(false)}
+                onClick={() => { setKpiModalOpen(false); setSelectedUser(""); }}
                 className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                 style={{ color: themeColors.textSecondary }}
               >
@@ -675,6 +661,26 @@ const Reports = () => {
             </div>
             
             <div className="p-5 overflow-y-auto flex-1 custom-scrollbar">
+              {/* Sales Executive Filter inside Modal */}
+              <div className="mb-4 max-w-xs">
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+                  Filter by Sales Executive
+                </label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full p-2.5 rounded-lg border outline-none text-sm font-medium"
+                  style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                >
+                  <option value="">All Sales Executives</option>
+                  {salesUsers.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {kpiDetailsLoading ? (
                 <div className="py-20 flex flex-col items-center justify-center">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2" style={{ borderColor: themeColors.primary }}></div>
@@ -743,7 +749,7 @@ const Reports = () => {
             
             <div className="p-4 border-t flex justify-end" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
               <button
-                onClick={() => setKpiModalOpen(false)}
+                onClick={() => { setKpiModalOpen(false); setSelectedUser(""); }}
                 className="px-6 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 text-white"
                 style={{ backgroundColor: themeColors.primary }}
               >
