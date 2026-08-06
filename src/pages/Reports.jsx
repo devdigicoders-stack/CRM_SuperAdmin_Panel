@@ -669,7 +669,7 @@ const Reports = () => {
                 <select
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border outline-none text-sm font-medium"
+                  className="w-full p-2.5 rounded-lg border outline-none text-sm font-medium mb-2"
                   style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
                 >
                   <option value="">All Sales Executives</option>
@@ -679,6 +679,11 @@ const Reports = () => {
                     </option>
                   ))}
                 </select>
+                {!kpiDetailsLoading && (
+                  <span className="text-xs font-semibold" style={{ color: themeColors.textSecondary }}>
+                    Total Records: <span className="font-bold" style={{ color: themeColors.primary }}>{kpiDetailsData.length}</span>
+                  </span>
+                )}
               </div>
 
               {kpiDetailsLoading ? (
