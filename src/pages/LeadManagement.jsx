@@ -1049,6 +1049,18 @@ const LeadManagement = () => {
                     <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Expected Delivery</span>
                     <span className="text-sm font-medium" style={{ color: themeColors.text }}>{historyLead.expectedDeliveryDate ? new Date(historyLead.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</span>
                   </div>
+                   {historyLead.productId && (
+                    <div className="col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                      <span className="block font-bold text-xs text-blue-600 uppercase tracking-wider mb-1">Catalog Product (Stock Connected)</span>
+                      <span className="text-sm font-black text-gray-800">{historyLead.productId.name} (SKU: {historyLead.productId.sku}) [Qty: {historyLead.productQuantity || 1}]</span>
+                    </div>
+                  )}
+                  {historyLead.productDetails && (
+                    <div className="col-span-2">
+                      <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Product Description Details</span>
+                      <span className="text-xs font-medium leading-relaxed block" style={{ color: themeColors.text }}>{historyLead.productDetails}</span>
+                    </div>
+                  )}
                   <div className="col-span-2">
                     <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Address</span>
                     <span className="text-xs font-medium leading-relaxed block whitespace-pre-wrap" style={{ color: themeColors.text }}>{historyLead.address || 'No address details provided.'}</span>
