@@ -11,7 +11,8 @@ const ROLES = [
   { id: "sales", label: "Sales Representative" },
   { id: "calling", label: "Calling Agent" },
   { id: "installation", label: "Installer" },
-  { id: "crmuser", label: "CRM User" }
+  { id: "crmuser", label: "CRM User" },
+  { id: "stock", label: "Stock Manager" }
 ];
 
 const CreateUser = () => {
