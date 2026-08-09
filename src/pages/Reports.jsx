@@ -29,9 +29,11 @@ const Reports = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Sales users state
+  // Settings & Sales users state
+  const [settings, setSettings] = useState({ leadSources: [], priorities: [], leadTags: [] });
   const [salesUsers, setSalesUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
 
@@ -45,7 +47,7 @@ const Reports = () => {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [historyLead, setHistoryLead] = useState(null);
 
-  // Fetch Sales Users List
+  // Fetch Sales Users List & Global Settings
   useEffect(() => {
     const fetchSalesUsers = async () => {
       try {
@@ -61,8 +63,24 @@ const Reports = () => {
         toast.error("Failed to load sales employees list");
       }
     };
+
+    const fetchSettings = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const res = await axios.get(`${baseUrl}/settings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.status === "success") {
+          setSettings(res.data.data.settings || { leadSources: [], priorities: [], leadTags: [] });
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings", err);
+      }
+    };
+
     if (token) {
       fetchSalesUsers();
+      fetchSettings();
     }
   }, [token]);
 
@@ -119,6 +137,7 @@ const Reports = () => {
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
       if (statusFilter) params.append("status", statusFilter);
+      if (tagFilter) params.append("tag", tagFilter);
 
       const res = await axios.get(`${baseUrl}/reports/export/excel?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -129,7 +148,7 @@ const Reports = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `leads_backup_${startDate || 'all'}_to_${endDate || 'all'}.xlsx`);
+      link.setAttribute('download', `leads_backup_${tagFilter ? tagFilter + '_' : ''}${startDate || 'all'}_to_${endDate || 'all'}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -305,9 +324,9 @@ const Reports = () => {
           <FaClipboardCheck style={{ color: themeColors.primary }} /> Leads Backup & Export
         </h3>
         <p className="text-xs mb-4" style={{ color: themeColors.textSecondary }}>
-          Filter leads by registration date range and status to download a backup Excel spreadsheet.
+          Filter leads by registration date range, status, and tag to download a backup Excel spreadsheet.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>Start Date</label>
             <input 
@@ -333,7 +352,7 @@ const Reports = () => {
             <select 
               value={statusFilter} 
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full p-2.5 rounded-lg border outline-none text-sm capitalize"
+              className="w-full p-2.5 rounded-lg border outline-none text-sm capitalize cursor-pointer"
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             >
               <option value="">All Statuses</option>
@@ -344,6 +363,21 @@ const Reports = () => {
               <option value="converted">Converted</option>
               <option value="closed">Closed</option>
               <option value="not_interested">Not Interested</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>Tag / Lead Filter</label>
+            <select 
+              value={tagFilter} 
+              onChange={(e) => setTagFilter(e.target.value)}
+              className="w-full p-2.5 rounded-lg border outline-none text-sm cursor-pointer"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            >
+              <option value="">All Tags</option>
+              <option value="unassigned" style={{ color: themeColors.primary, fontWeight: 'bold' }}>Unassigned Leads</option>
+              {settings?.leadTags?.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
             </select>
           </div>
         </div>
