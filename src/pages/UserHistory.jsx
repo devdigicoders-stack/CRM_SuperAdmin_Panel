@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from "react";
-import { FaUserClock, FaSearch, FaHistory, FaCheckCircle, FaExclamationCircle, FaChartLine, FaEye, FaTimes, FaCalendarAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaUserClock, FaSearch, FaHistory, FaCheckCircle, FaExclamationCircle, FaChartLine, FaEye, FaTimes, FaCalendarAlt, FaChevronLeft, FaChevronRight, FaBuilding, FaFilter } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -10,6 +10,8 @@ const UserHistory = () => {
   const { token } = useAuth();
   const [performanceData, setPerformanceData] = useState([]);
   const [isFetching, setIsFetching] = useState(true);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -30,14 +32,11 @@ const UserHistory = () => {
     setIsFetching(true);
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      let query = "";
-      if (startDate && endDate) {
-        query = `?startDate=${startDate}&endDate=${endDate}`;
-      } else if (startDate) {
-        query = `?startDate=${startDate}`;
-      } else if (endDate) {
-        query = `?endDate=${endDate}`;
-      }
+      const params = new URLSearchParams();
+      if (selectedBranch) params.append("branchId", selectedBranch);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      const query = params.toString() ? `?${params.toString()}` : "";
 
       const res = await axios.get(`${baseUrl}/users/tracking/summary${query}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -55,8 +54,26 @@ const UserHistory = () => {
   };
 
   useEffect(() => {
+    if (!token) return;
+    const fetchBranches = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const res = await axios.get(`${baseUrl}/branches`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.status === "success") {
+          setBranches(res.data.data.branches || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch branches", err);
+      }
+    };
+    fetchBranches();
+  }, [token]);
+
+  useEffect(() => {
     fetchPerformance();
-  }, [token, startDate, endDate]);
+  }, [token, selectedBranch, startDate, endDate]);
 
   const fetchUserHistory = async (userId) => {
     setIsLeadsModalOpen(true);
@@ -140,7 +157,26 @@ const UserHistory = () => {
           />
         </div>
         
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 overflow-x-auto w-full md:w-auto">
+          <div className="relative min-w-[160px]">
+            <FaBuilding className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10 text-xs" style={{ color: themeColors.textSecondary }} />
+            <select
+              value={selectedBranch}
+              onChange={(e) => {
+                setSelectedBranch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm appearance-none cursor-pointer"
+              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+            >
+              <option value="">All Branches</option>
+              {branches.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <input
             type="date"
             value={startDate}
@@ -156,9 +192,9 @@ const UserHistory = () => {
             className="px-3 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
             style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
           />
-          {(startDate || endDate) && (
+          {(startDate || endDate || selectedBranch) && (
              <button
-                onClick={() => { setStartDate(""); setEndDate(""); }}
+                onClick={() => { setStartDate(""); setEndDate(""); setSelectedBranch(""); }}
                 className="ml-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
                 style={{ backgroundColor: `${themeColors.danger}15`, color: themeColors.danger }}
              >

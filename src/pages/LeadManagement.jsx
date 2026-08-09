@@ -1,11 +1,12 @@
 import { memo, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
+import SearchableSelect from '../components/SearchableSelect';
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
   FaBullhorn, FaUserPlus, FaUser, FaTimes, FaCalendarPlus, 
   FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
-  FaUpload, FaDownload, FaFileCsv
+  FaUpload, FaDownload, FaFileCsv, FaBuilding
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -29,9 +30,11 @@ const LeadManagement = () => {
   const limit = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterBranch, setFilterBranch] = useState("");
   const [filterTag, setFilterTag] = useState(location.state?.filterTag || "");
   const [filterSalesMember, setFilterSalesMember] = useState("");
   const [filterDate, setFilterDate] = useState("");
+  const [branches, setBranches] = useState([]);
 
   // Modals & States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -60,18 +63,17 @@ const LeadManagement = () => {
   useEffect(() => {
     if (!token) return;
     
-    // Fetch staff list once for assignment dropdown
-    const fetchStaffList = async () => {
+    const fetchBranches = async () => {
       try {
         const baseUrl = import.meta.env.VITE_API_BASE_URL;
-        const res = await axios.get(`${baseUrl}/users?active=true&limit=100`, {
+        const res = await axios.get(`${baseUrl}/branches`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.status === "success") {
-          setStaffList(res.data.data.users || []);
+          setBranches(res.data.data.branches || []);
         }
       } catch (err) {
-        console.error("Failed to fetch staff list", err);
+        console.error("Failed to fetch branches", err);
       }
     };
 
@@ -89,9 +91,30 @@ const LeadManagement = () => {
       }
     };
 
-    fetchStaffList();
+    fetchBranches();
     fetchSettings();
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    const fetchStaffList = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const params = { active: true, limit: 100 };
+        if (filterBranch) params.branchId = filterBranch;
+        const res = await axios.get(`${baseUrl}/users`, {
+          params,
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.status === "success") {
+          setStaffList(res.data.data.users || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch staff list", err);
+      }
+    };
+    fetchStaffList();
+  }, [token, filterBranch]);
 
   useEffect(() => {
     if (!token) return;
@@ -99,7 +122,7 @@ const LeadManagement = () => {
       fetchLeads();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filterTag, filterSalesMember, filterDate, currentPage, token]);
+  }, [searchTerm, filterTag, filterSalesMember, filterBranch, filterDate, currentPage, token]);
 
   useEffect(() => {
     const phone = newLead.phone?.trim();
@@ -150,6 +173,7 @@ const LeadManagement = () => {
       };
       
       if (searchTerm) params.search = searchTerm;
+      if (filterBranch) params.branchId = filterBranch;
       if (filterDate) params.createdAt = filterDate;
       if (filterSalesMember) {
         params.assignedTo = filterSalesMember;
@@ -422,26 +446,44 @@ const LeadManagement = () => {
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             />
           </div>
-          <div className="relative w-full md:w-52">
-            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{ color: themeColors.textSecondary }} />
+          <div className="relative w-full md:w-44">
+            <FaBuilding className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{ color: themeColors.textSecondary }} />
             <select
-              value={filterSalesMember}
+              value={filterBranch}
               onChange={(e) => {
-                setFilterSalesMember(e.target.value);
+                setFilterBranch(e.target.value);
+                setFilterSalesMember("");
                 setCurrentPage(1);
               }}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm appearance-none cursor-pointer"
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             >
-              <option value="">All Sales Members</option>
-              <option value="unassigned" style={{ color: themeColors.primary, fontWeight: 'bold' }}>Unassigned Leads</option>
-              {staffList.map(staff => (
-                <option key={staff._id} value={staff._id}>
-                  {staff.name} ({staff.role.toUpperCase()})
-                </option>
+              <option value="">All Branches</option>
+              {branches.map(branch => (
+                <option key={branch._id} value={branch._id}>{branch.name}</option>
               ))}
             </select>
           </div>
+          <SearchableSelect
+            options={[
+              { value: "", label: "All Sales Members" },
+              { value: "unassigned", label: "Unassigned Leads" },
+              ...staffList.map((staff) => ({
+                value: staff._id,
+                label: `${staff.name} (${staff.role.toUpperCase()})`,
+              })),
+            ]}
+            value={filterSalesMember}
+            onChange={(val) => {
+              setFilterSalesMember(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Search member name..."
+            defaultLabel="All Sales Members"
+            icon={FaUser}
+            themeColors={themeColors}
+            className="w-full md:w-56"
+          />
           <div className="relative w-full md:w-44">
             <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{ color: themeColors.textSecondary }} />
             <select
@@ -831,21 +873,22 @@ const LeadManagement = () => {
 
                 <div>
                   <label className="block text-sm font-bold mb-1.5" style={{ color: themeColors.text }}>Assign To (Optional)</label>
-                  <div className="relative">
-                    <select 
-                      value={newLead.assignedTo || ""} onChange={(e) => setNewLead({...newLead, assignedTo: e.target.value})}
-                      className="w-full p-2.5 rounded-lg border focus:ring-2 focus:outline-none transition-colors appearance-none"
-                      style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
-                    >
-                      <option value="">Do not assign yet</option>
-                      {staffList.map(staff => (
-                        <option key={staff._id} value={staff._id}>{staff.name} ({staff.role})</option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" style={{ color: themeColors.textSecondary }}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                  </div>
+                  <SearchableSelect
+                    options={[
+                      { value: "", label: "Do not assign yet" },
+                      ...staffList.map((staff) => ({
+                        value: staff._id,
+                        label: `${staff.name} (${staff.role.toUpperCase()})`,
+                      })),
+                    ]}
+                    value={newLead.assignedTo || ""}
+                    onChange={(val) => setNewLead({ ...newLead, assignedTo: val })}
+                    placeholder="Search member name..."
+                    defaultLabel="Do not assign yet"
+                    icon={FaUser}
+                    themeColors={themeColors}
+                    className="w-full"
+                  />
                 </div>
               </div>
 
@@ -896,24 +939,19 @@ const LeadManagement = () => {
 
               <div>
                 <label className="block text-sm font-bold mb-2" style={{ color: themeColors.text }}>Team Member</label>
-                <div className="relative">
-                  <select 
-                    className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 shadow-sm transition-colors font-medium appearance-none"
-                    style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
-                    value={selectedAssigneeId}
-                    onChange={(e) => setSelectedAssigneeId(e.target.value)}
-                  >
-                    <option value="" disabled>Choose a user...</option>
-                    {staffList.map(staff => (
-                      <option key={staff._id} value={staff._id}>
-                        {staff.name} ({staff.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none" style={{ color: themeColors.textSecondary }}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                  </div>
-                </div>
+                <SearchableSelect
+                  options={staffList.map((staff) => ({
+                    value: staff._id,
+                    label: `${staff.name} (${staff.role.toUpperCase()})`,
+                  }))}
+                  value={selectedAssigneeId}
+                  onChange={(val) => setSelectedAssigneeId(val)}
+                  placeholder="Search member name..."
+                  defaultLabel="Choose a user..."
+                  icon={FaUser}
+                  themeColors={themeColors}
+                  className="w-full"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3 p-4 border-t bg-black/5 dark:bg-white/5" style={{ borderColor: themeColors.border }}>
