@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, FaExclamationTriangle, FaChartLine, FaCodeBranch } from "react-icons/fa";
+import { FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, FaExclamationTriangle, FaChartLine, FaCodeBranch, FaTrashAlt } from "react-icons/fa";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const CreateAdmin = lazy(() => import("../pages/CreateAdmin"));
@@ -7,6 +7,7 @@ const CreateUser = lazy(() => import("../pages/CreateUser"));
 const GlobalSettings = lazy(() => import("../pages/GlobalSettings"));
 const Notifications = lazy(() => import("../pages/Notifications"));
 const LeadManagement = lazy(() => import("../pages/LeadManagement"));
+const BulkDeleteStaffData = lazy(() => import("../pages/BulkDeleteStaffData"));
 const Profile = lazy(() => import("../pages/Profile"));
 const ChangePassword = lazy(() => import("../pages/ChangePassword"));
 const CalendarView = lazy(() => import("../pages/CalendarView"));
@@ -22,6 +23,7 @@ const routes = [
   { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser, permission: "create-staff" },
   { path: "/branch-management", component: BranchManagement, name: "Branch Management", icon: FaCodeBranch, superAdminOnly: true },
   { path: "/lead-management", component: LeadManagement, name: "Lead Management", icon: FaBullhorn, permission: "lead-management" },
+  { path: "/bulk-delete-staff-data", component: BulkDeleteStaffData, name: "Delete Staff Data", icon: FaTrashAlt, superAdminOnly: true },
   { path: "/user-history", component: UserHistory, name: "Staff History", icon: FaUsers, permission: "user-history" },
   { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog, permission: "global-settings" },
   { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt, permission: "calendar" },
