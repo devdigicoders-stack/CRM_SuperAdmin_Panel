@@ -72,7 +72,7 @@ export default function BulkDeleteStaffData() {
       }
     } catch (err) {
       console.error("Error fetching staff summary:", err);
-      toast.error("Failed to load staff members data");
+      toast.error(err?.response?.data?.message || "Failed to load staff members data");
     } finally {
       setLoadingStaff(false);
     }
