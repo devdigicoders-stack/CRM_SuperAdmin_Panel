@@ -23,6 +23,9 @@ import {
   FaLayerGroup,
   FaShieldAlt,
   FaCheckCircle,
+  FaExchangeAlt,
+  FaUserCheck,
+  FaInfoCircle,
 } from "react-icons/fa";
 
 export default function BulkDeleteStaffData() {
@@ -50,8 +53,11 @@ export default function BulkDeleteStaffData() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
 
-  // Action status
+  // Action mode & status ("delete" | "reassign")
+  const [activeMode, setActiveMode] = useState("delete");
+  const [targetAssigneeId, setTargetAssigneeId] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReassigning, setIsReassigning] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
 
@@ -336,26 +342,235 @@ export default function BulkDeleteStaffData() {
     }
   };
 
+  // --- REASSIGN ACTION 1: Reassign Individually Selected Leads ---
+  const handleReassignSelectedLeads = async () => {
+    if (selectedLeadIds.length === 0) {
+      toast.error("Please select at least one lead to reassign");
+      return;
+    }
+    if (!targetAssigneeId) {
+      toast.error("Please select a target staff member to reassign leads to");
+      return;
+    }
+
+    const targetStaff = staffList.find((s) => s._id === targetAssigneeId);
+    const targetName = targetStaff ? `${targetStaff.name} (${targetStaff.role})` : "Selected Staff";
+
+    const result = await Swal.fire({
+      title: `Reassign ${selectedLeadIds.length} Selected Leads?`,
+      html: `
+        <div class="text-left text-sm space-y-3">
+          <p class="text-blue-600 font-semibold flex items-center gap-1">
+            🔄 Transferring Lead Ownership
+          </p>
+          <p class="text-gray-600">
+            You are about to reassign <b>${selectedLeadIds.length}</b> customer leads to:
+          </p>
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 font-bold text-sm">
+            👤 ${targetName}
+          </div>
+          <p class="text-gray-500 text-xs">
+            The target staff member will immediately receive access and notification for these leads.
+          </p>
+        </div>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, Reassign (${selectedLeadIds.length}) Leads`,
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    setIsReassigning(true);
+    try {
+      const res = await axios.post(
+        `${baseUrl}/leads/bulk-reassign`,
+        {
+          targetUserId: targetAssigneeId,
+          leadIds: selectedLeadIds,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.status === "success") {
+        Swal.fire({
+          title: "Leads Reassigned!",
+          text: res.data.message || `Successfully reassigned ${selectedLeadIds.length} leads.`,
+          icon: "success",
+          confirmButtonColor: "#2563eb",
+        });
+        setSelectedLeadIds([]);
+        fetchLeads();
+        fetchStaffSummary();
+      }
+    } catch (err) {
+      console.error("Reassign error:", err);
+      toast.error(err.response?.data?.message || "Failed to reassign selected leads");
+    } finally {
+      setIsReassigning(false);
+    }
+  };
+
+  // --- REASSIGN ACTION 2: Reassign ALL Filtered Leads of Selected Staff ---
+  const handleReassignAllStaffData = async () => {
+    if (selectedStaffIds.length === 0) {
+      toast.error("Please select at least one staff member whose leads to transfer");
+      return;
+    }
+    if (!targetAssigneeId) {
+      toast.error("Please select a target staff member to reassign leads to");
+      return;
+    }
+
+    const targetStaff = staffList.find((s) => s._id === targetAssigneeId);
+    const targetName = targetStaff ? `${targetStaff.name} (${targetStaff.role})` : "Selected Staff";
+    const sourceStaffNames = selectedStaffObjects.map((s) => s.name).join(", ");
+
+    const result = await Swal.fire({
+      title: `Reassign ALL Filtered Leads?`,
+      html: `
+        <div class="text-left text-sm space-y-3">
+          <p class="text-gray-600">
+            You are about to transfer <b>${totalLeadsCount}</b> leads from:
+          </p>
+          <div class="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 text-xs font-semibold">
+            From: <b>${sourceStaffNames}</b>
+          </div>
+          <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs font-semibold">
+            To: <b>${targetName}</b>
+          </div>
+          <p class="text-gray-500 text-xs italic">
+            Status Filter: <b>${statusFilter === "all" ? "All Statuses" : statusFilter.toUpperCase()}</b>
+          </p>
+        </div>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, Reassign All (${totalLeadsCount}) Leads!`,
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    setIsReassigning(true);
+    try {
+      const payload = {
+        targetUserId: targetAssigneeId,
+        userIds: selectedStaffIds,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      };
+
+      const res = await axios.post(`${baseUrl}/leads/bulk-reassign`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.data.status === "success") {
+        Swal.fire({
+          title: "All Leads Reassigned!",
+          text: res.data.message || "All filtered leads have been reassigned successfully.",
+          icon: "success",
+          confirmButtonColor: "#2563eb",
+        });
+        setSelectedLeadIds([]);
+        fetchLeads();
+        fetchStaffSummary();
+      }
+    } catch (err) {
+      console.error("Reassign error:", err);
+      toast.error(err.response?.data?.message || "Failed to reassign staff leads");
+    } finally {
+      setIsReassigning(false);
+    }
+  };
+
   const totalPages = Math.ceil(totalLeadsCount / pageSize) || 1;
 
   return (
     <div className="space-y-6 pb-24">
+      {/* Operation Mode Tabs: Bulk Delete vs Bulk Reassign */}
+      <div className="flex items-center p-1.5 bg-gray-100/90 rounded-2xl border border-gray-200/90 w-full sm:w-fit shadow-inner gap-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            setActiveMode("delete");
+            setSelectedLeadIds([]);
+          }}
+          className={`flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            activeMode === "delete"
+              ? "bg-rose-600 text-white shadow-md shadow-rose-600/25 scale-[1.02]"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60"
+          }`}
+        >
+          <FaTrashAlt className="w-3.5 h-3.5" />
+          <span>Bulk Delete Data</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveMode("reassign");
+            setSelectedLeadIds([]);
+          }}
+          className={`flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            activeMode === "reassign"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60"
+          }`}
+        >
+          <FaExchangeAlt className="w-3.5 h-3.5" />
+          <span>Bulk Reassign Leads</span>
+        </button>
+      </div>
+
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shadow-sm">
-              <FaTrashAlt className="w-5 h-5" />
+            <div
+              className={`p-2.5 rounded-xl shadow-sm ${
+                activeMode === "delete"
+                  ? "bg-rose-100 text-rose-600"
+                  : "bg-blue-100 text-blue-600"
+              }`}
+            >
+              {activeMode === "delete" ? (
+                <FaTrashAlt className="w-5 h-5" />
+              ) : (
+                <FaExchangeAlt className="w-5 h-5" />
+              )}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                Staff Assigned Data Cleanup
-                <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-rose-100 text-rose-700 rounded-full border border-rose-200">
-                  Super Admin Only
+                {activeMode === "delete"
+                  ? "Staff Assigned Data Cleanup"
+                  : "Staff Lead Bulk Reassignment"}
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full border ${
+                    activeMode === "delete"
+                      ? "bg-rose-100 text-rose-700 border-rose-200"
+                      : "bg-blue-100 text-blue-700 border-blue-200"
+                  }`}
+                >
+                  {activeMode === "delete"
+                    ? "Super Admin Only"
+                    : "Super Admin & Admin"}
                 </span>
               </h1>
               <p className="text-xs text-gray-500 mt-0.5">
-                Select sales persons / staff, inspect their assigned data, and safely bulk delete records
+                {activeMode === "delete"
+                  ? "Select sales persons / staff, inspect their assigned data, and safely bulk delete records"
+                  : "Select source sales persons / staff, inspect their assigned leads, and reassign them in bulk to another team member"}
               </p>
             </div>
           </div>
@@ -373,20 +588,36 @@ export default function BulkDeleteStaffData() {
         </button>
       </div>
 
-      {/* Safety Notice */}
-      <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex items-start gap-3 text-xs text-amber-900 shadow-sm">
-        <FaExclamationTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-        <div>
-          <span className="font-bold">Instructions & Safety Warning:</span>
-          <p className="text-amber-800 mt-0.5">
-            1. Select one or more sales persons from the list below to view all customer leads assigned to them.
-            <br />
-            2. You can filter the data by lead status or date, select specific rows, and delete them in bulk.
-            <br />
-            3. Deleting records is permanent and cannot be undone. Always verify selections before confirming.
-          </p>
+      {/* Safety Notice / Instructions */}
+      {activeMode === "delete" ? (
+        <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex items-start gap-3 text-xs text-amber-900 shadow-sm">
+          <FaExclamationTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-bold">Instructions & Safety Warning:</span>
+            <p className="text-amber-800 mt-0.5">
+              1. Select one or more sales persons from the list below to view all customer leads assigned to them.
+              <br />
+              2. You can filter the data by lead status or date, select specific rows, and delete them in bulk.
+              <br />
+              3. Deleting records is permanent and cannot be undone. Always verify selections before confirming.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="p-4 bg-blue-50/80 border border-blue-200/80 rounded-2xl flex items-start gap-3 text-xs text-blue-900 shadow-sm">
+          <FaInfoCircle className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-bold">Bulk Reassignment Instructions:</span>
+            <p className="text-blue-800 mt-0.5">
+              1. <b>Step 1:</b> Select the source sales person(s) / staff whose leads you wish to transfer.
+              <br />
+              2. <b>Step 2:</b> Filter by status, search, or date, and select specific customer leads (or all matching leads).
+              <br />
+              3. <b>Step 3:</b> Select the new target team member in the bottom action bar and confirm the bulk reassignment.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* SECTION 1: Staff Selection Grid */}
       <div className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-sm space-y-4">
@@ -636,7 +867,11 @@ export default function BulkDeleteStaffData() {
                             selectedLeadIds.length === leads.length
                           }
                           onChange={selectAllVisibleLeads}
-                          className="rounded border-gray-300 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer"
+                          className={`rounded border-gray-300 w-4 h-4 cursor-pointer ${
+                            activeMode === "delete"
+                              ? "text-rose-600 focus:ring-rose-500"
+                              : "text-blue-600 focus:ring-blue-500"
+                          }`}
                         />
                       </th>
                       <th className="py-3 px-4">Customer Name</th>
@@ -654,8 +889,10 @@ export default function BulkDeleteStaffData() {
                       return (
                         <tr
                           key={lead._id}
-                          className={`hover:bg-rose-50/30 transition-colors ${
-                            isLeadChecked ? "bg-rose-50/50" : ""
+                          className={`transition-colors ${
+                            activeMode === "delete"
+                              ? isLeadChecked ? "bg-rose-50/50" : "hover:bg-rose-50/30"
+                              : isLeadChecked ? "bg-blue-50/50" : "hover:bg-blue-50/30"
                           }`}
                         >
                           <td className="py-3 px-4 text-center">
@@ -663,7 +900,11 @@ export default function BulkDeleteStaffData() {
                               type="checkbox"
                               checked={isLeadChecked}
                               onChange={() => toggleLeadSelection(lead._id)}
-                              className="rounded border-gray-300 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer"
+                              className={`rounded border-gray-300 w-4 h-4 cursor-pointer ${
+                                activeMode === "delete"
+                                  ? "text-rose-600 focus:ring-rose-500"
+                                  : "text-blue-600 focus:ring-blue-500"
+                              }`}
                             />
                           </td>
 
@@ -781,16 +1022,37 @@ export default function BulkDeleteStaffData() {
 
       {/* FLOATING ACTION BAR (When items are selected) */}
       {selectedStaffIds.length > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-72 md:right-8 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl z-40 border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 animate-slideUp">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-600/30 rounded-xl text-rose-400">
-              <FaShieldAlt className="text-lg" />
+        <div className="fixed bottom-4 left-4 right-4 md:left-72 md:right-8 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl z-40 border border-slate-700 flex flex-col lg:flex-row items-center justify-between gap-4 animate-slideUp">
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            <div
+              className={`p-2.5 rounded-xl ${
+                activeMode === "delete"
+                  ? "bg-rose-600/30 text-rose-400"
+                  : "bg-blue-600/30 text-blue-400"
+              }`}
+            >
+              {activeMode === "delete" ? (
+                <FaShieldAlt className="text-lg" />
+              ) : (
+                <FaExchangeAlt className="text-lg" />
+              )}
             </div>
             <div>
-              <div className="font-bold text-sm">
-                {selectedLeadIds.length > 0
-                  ? `${selectedLeadIds.length} Leads Selected`
-                  : `${selectedStaffIds.length} Staff Selected`}
+              <div className="font-bold text-sm flex items-center gap-2">
+                <span>
+                  {selectedLeadIds.length > 0
+                    ? `${selectedLeadIds.length} Leads Selected`
+                    : `${selectedStaffIds.length} Staff Selected`}
+                </span>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                    activeMode === "delete"
+                      ? "bg-rose-900/60 text-rose-300 border border-rose-700/50"
+                      : "bg-blue-900/60 text-blue-300 border border-blue-700/50"
+                  }`}
+                >
+                  {activeMode === "delete" ? "Delete Mode" : "Reassign Mode"}
+                </span>
               </div>
               <p className="text-slate-400 text-xs">
                 Total matching leads in database:{" "}
@@ -799,27 +1061,88 @@ export default function BulkDeleteStaffData() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            {/* Button 1: Delete Checked Leads */}
-            <button
-              onClick={handleDeleteSelectedLeads}
-              disabled={selectedLeadIds.length === 0 || isDeleting}
-              className="flex-1 sm:flex-initial px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <FaTrashAlt />
-              <span>Delete Checked Leads ({selectedLeadIds.length})</span>
-            </button>
+          {activeMode === "delete" ? (
+            <div className="flex items-center gap-2.5 w-full lg:w-auto">
+              {/* Button 1: Delete Checked Leads */}
+              <button
+                onClick={handleDeleteSelectedLeads}
+                disabled={selectedLeadIds.length === 0 || isDeleting}
+                className="flex-1 lg:flex-initial px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <FaTrashAlt />
+                <span>Delete Checked Leads ({selectedLeadIds.length})</span>
+              </button>
 
-            {/* Button 2: Wipe ALL Assigned Leads of Selected Staff */}
-            <button
-              onClick={handleDeleteAllStaffData}
-              disabled={isDeleting || totalLeadsCount === 0}
-              className="flex-1 sm:flex-initial px-4 py-2.5 bg-red-950 hover:bg-red-900 border border-red-700 text-red-200 hover:text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <FaTrashAlt />
-              <span>Wipe ALL Staff Data ({totalLeadsCount})</span>
-            </button>
-          </div>
+              {/* Button 2: Wipe ALL Assigned Leads of Selected Staff */}
+              <button
+                onClick={handleDeleteAllStaffData}
+                disabled={isDeleting || totalLeadsCount === 0}
+                className="flex-1 lg:flex-initial px-4 py-2.5 bg-red-950 hover:bg-red-900 border border-red-700 text-red-200 hover:text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <FaTrashAlt />
+                <span>Wipe ALL Staff Data ({totalLeadsCount})</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+              {/* Target Assignee Dropdown */}
+              <div className="flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-xl px-3 py-2">
+                <FaUserCheck className="text-blue-400 text-xs shrink-0" />
+                <select
+                  value={targetAssigneeId}
+                  onChange={(e) => setTargetAssigneeId(e.target.value)}
+                  className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer w-full sm:w-56 truncate"
+                >
+                  <option value="" className="bg-slate-900 text-gray-400">
+                    -- Select Target Staff Member --
+                  </option>
+                  {staffList
+                    .filter((s) => s.active !== false)
+                    .map((s) => (
+                      <option
+                        key={s._id}
+                        value={s._id}
+                        className="bg-slate-900 text-white"
+                      >
+                        {s.name} ({s.role}) • {s.totalLeads || 0} leads
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Button 1: Reassign Checked Leads */}
+              <button
+                onClick={handleReassignSelectedLeads}
+                disabled={
+                  selectedLeadIds.length === 0 ||
+                  !targetAssigneeId ||
+                  isReassigning
+                }
+                className="flex-1 sm:flex-initial px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <FaExchangeAlt
+                  className={isReassigning ? "animate-spin" : ""}
+                />
+                <span>Reassign Checked ({selectedLeadIds.length})</span>
+              </button>
+
+              {/* Button 2: Reassign ALL Staff Leads */}
+              <button
+                onClick={handleReassignAllStaffData}
+                disabled={
+                  totalLeadsCount === 0 ||
+                  !targetAssigneeId ||
+                  isReassigning
+                }
+                className="flex-1 sm:flex-initial px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <FaExchangeAlt
+                  className={isReassigning ? "animate-spin" : ""}
+                />
+                <span>Reassign ALL ({totalLeadsCount})</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

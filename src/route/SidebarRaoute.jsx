@@ -23,7 +23,7 @@ const routes = [
   { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser, permission: "create-staff" },
   { path: "/branch-management", component: BranchManagement, name: "Branch Management", icon: FaCodeBranch, superAdminOnly: true },
   { path: "/lead-management", component: LeadManagement, name: "Lead Management", icon: FaBullhorn, permission: "lead-management" },
-  { path: "/bulk-delete-staff-data", component: BulkDeleteStaffData, name: "Delete Staff Data", icon: FaTrashAlt, superAdminOnly: true },
+  { path: "/bulk-delete-staff-data", component: BulkDeleteStaffData, name: "Delete / Reassign Staff Data", icon: FaTrashAlt, superAdminOnly: true },
   { path: "/user-history", component: UserHistory, name: "Staff History", icon: FaUsers, permission: "user-history" },
   { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog, permission: "global-settings" },
   { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt, permission: "calendar" },
