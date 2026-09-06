@@ -6,7 +6,8 @@ import {
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
   FaBullhorn, FaUserPlus, FaUser, FaTimes, FaCalendarPlus, 
   FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
-  FaUpload, FaDownload, FaFileCsv, FaBuilding, FaChevronDown, FaCheck
+  FaUpload, FaDownload, FaFileCsv, FaBuilding, FaChevronDown, FaCheck,
+  FaExchangeAlt, FaCheckSquare, FaSquare
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -28,6 +29,11 @@ const LeadManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const limit = 10;
+
+  // Bulk Selection & Reassign State
+  const [selectedLeadIds, setSelectedLeadIds] = useState([]);
+  const [bulkAssigneeId, setBulkAssigneeId] = useState("");
+  const [isBulkAssigning, setIsBulkAssigning] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBranch, setFilterBranch] = useState("");
@@ -222,6 +228,75 @@ const LeadManagement = () => {
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
+      setSelectedLeadIds([]);
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedLeadIds(leads.map((l) => l._id));
+    } else {
+      setSelectedLeadIds([]);
+    }
+  };
+
+  const handleToggleLead = (leadId) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]
+    );
+  };
+
+  const handleBulkReassign = async () => {
+    if (selectedLeadIds.length === 0) {
+      toast.error("Please select at least one lead to reassign");
+      return;
+    }
+    if (!bulkAssigneeId) {
+      toast.error("Please select a team member to reassign to");
+      return;
+    }
+
+    const targetStaff = staffList.find((s) => s._id === bulkAssigneeId);
+    const targetName = targetStaff ? `${targetStaff.name} (${targetStaff.role?.toUpperCase()})` : "selected member";
+
+    const result = await Swal.fire({
+      title: 'Bulk Reassign Leads?',
+      text: `Are you sure you want to reassign ${selectedLeadIds.length} selected lead(s) to ${targetName}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: themeColors.primary || '#3b82f6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Reassign!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) return;
+
+    setIsBulkAssigning(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const res = await axios.post(
+        `${baseUrl}/leads/bulk-reassign`,
+        {
+          targetUserId: bulkAssigneeId,
+          leadIds: selectedLeadIds,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data.status === "success") {
+        toast.success(res.data.message || `Successfully reassigned ${selectedLeadIds.length} leads`);
+        setSelectedLeadIds([]);
+        setBulkAssigneeId("");
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to bulk reassign leads");
+    } finally {
+      setIsBulkAssigning(false);
     }
   };
 
@@ -657,15 +732,98 @@ const LeadManagement = () => {
         </div>
       </div>
 
+      {/* Bulk Selection Action Bar */}
+      {selectedLeadIds.length > 0 && (
+        <div 
+          className="mb-6 p-4 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-fade-in"
+          style={{ 
+            backgroundColor: `${themeColors.primary}12`, 
+            borderColor: `${themeColors.primary}40` 
+          }}
+        >
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-sm"
+              style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
+            >
+              {selectedLeadIds.length}
+            </div>
+            <div>
+              <h4 className="text-sm font-bold" style={{ color: themeColors.text }}>
+                {selectedLeadIds.length} Lead{selectedLeadIds.length > 1 ? 's' : ''} Selected
+              </h4>
+              <p className="text-xs font-medium" style={{ color: themeColors.textSecondary }}>
+                Choose a team member to reassign the selected leads
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto flex-wrap sm:flex-nowrap justify-end">
+            <div className="w-full sm:w-64">
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Select Team Member" },
+                  ...staffList.map((staff) => ({
+                    value: staff._id,
+                    label: `${staff.name} (${staff.role.toUpperCase()})`,
+                  })),
+                ]}
+                value={bulkAssigneeId}
+                onChange={(val) => setBulkAssigneeId(val)}
+                placeholder="Search staff to reassign..."
+                defaultLabel="Select Team Member"
+                icon={FaUser}
+                themeColors={themeColors}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleBulkReassign}
+              disabled={isBulkAssigning || !bulkAssigneeId}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md cursor-pointer whitespace-nowrap"
+              style={{
+                backgroundColor: themeColors.primary,
+                color: themeColors.onPrimary,
+              }}
+            >
+              <FaExchangeAlt className={isBulkAssigning ? "animate-spin text-xs" : "text-xs"} />
+              {isBulkAssigning ? "Reassigning..." : "Reassign Selected"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedLeadIds([]);
+                setBulkAssigneeId("");
+              }}
+              className="px-3.5 py-2.5 rounded-lg text-xs font-semibold border transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+              style={{ borderColor: themeColors.border, color: themeColors.textSecondary }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Leads Table Card */}
       <div 
         className="rounded-xl shadow-sm border overflow-hidden transition-all duration-300 hover:shadow-md flex flex-col min-h-[400px]"
         style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
       >
         <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse min-w-[1100px]">
+          <table className="w-full text-left border-collapse min-w-[1150px]">
             <thead>
               <tr style={{ backgroundColor: `${themeColors.primary}08`, borderBottom: `1px solid ${themeColors.border}` }}>
+                <th className="py-4 px-4 font-semibold text-sm whitespace-nowrap w-12 text-center" style={{ color: themeColors.textSecondary }}>
+                  <input
+                    type="checkbox"
+                    checked={leads.length > 0 && selectedLeadIds.length === leads.length}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                    title="Select all on this page"
+                  />
+                </th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Lead Details</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Contact & Comm.</th>
                 <th className="py-4 px-5 font-semibold text-sm whitespace-nowrap" style={{ color: themeColors.textSecondary }}>Assigned To</th>
@@ -679,178 +837,189 @@ const LeadManagement = () => {
             <tbody>
               {isFetching ? (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center">
+                  <td colSpan="9" className="py-12 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 mx-auto" style={{ borderColor: themeColors.primary }}></div>
                   </td>
                 </tr>
-              ) : leads.length > 0 ? leads.map((lead, index) => (
-                <tr 
-                  key={lead._id} 
-                  style={{ borderBottom: index !== leads.length - 1 ? `1px solid ${themeColors.border}` : 'none' }}
-                  className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-150 group"
-                >
-                  <td className="py-4 px-5">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span 
-                          className="text-sm font-bold cursor-pointer text-blue-600 hover:underline" 
-                          onClick={() => { setHistoryLead(lead); setIsHistoryModalOpen(true); }}
-                        >
-                          {lead.name}
+              ) : leads.length > 0 ? leads.map((lead, index) => {
+                const isSelected = selectedLeadIds.includes(lead._id);
+                return (
+                  <tr 
+                    key={lead._id} 
+                    style={{ borderBottom: index !== leads.length - 1 ? `1px solid ${themeColors.border}` : 'none' }}
+                    className={`hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-150 group ${isSelected ? 'bg-blue-500/10' : ''}`}
+                  >
+                    <td className="py-4 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleLead(lead._id)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                      />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span 
+                            className="text-sm font-bold cursor-pointer text-blue-600 hover:underline" 
+                            onClick={() => { setHistoryLead(lead); setIsHistoryModalOpen(true); }}
+                          >
+                            {lead.name}
+                          </span>
+                          {lead.isReassigned && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-orange-500 text-white tracking-wide uppercase">
+                              REASSIGNED
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-semibold mt-1 uppercase" style={{ color: getPriorityColor(lead.priority) }}>
+                          {lead.priority || 'Normal'} Priority
                         </span>
-                        {lead.isReassigned && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-orange-500 text-white tracking-wide uppercase">
-                            REASSIGNED
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium" style={{ color: themeColors.textSecondary }}>{lead.email}</span>
+                        <span className="text-xs mt-0.5" style={{ color: themeColors.text }}>{lead.phone}</span>
+                        {/* Integrations (WhatsApp / Call) */}
+                        {lead.integrations && (
+                          <div className="flex gap-2 mt-2">
+                            {lead.integrations.whatsappLink && (
+                              <button onClick={() => setWaModalLead(lead)} 
+                                 className="text-[#25D366] hover:scale-110 transition-transform p-1 rounded-full bg-[#25D366]/10"
+                                 title="Chat on WhatsApp">
+                                <FaWhatsapp />
+                              </button>
+                            )}
+                            {lead.integrations.callUri && (
+                              <a href={lead.integrations.callUri} 
+                                 className="text-blue-500 hover:scale-110 transition-transform p-1 rounded-full bg-blue-500/10"
+                                 title="Make a Call">
+                                <FaPhoneAlt />
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      {lead.assignedTo ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium" style={{ color: themeColors.text }}>{lead.assignedTo.name}</span>
+                          <span 
+                            className="text-[10px] uppercase tracking-wider font-bold mt-1 px-2 py-0.5 rounded-md self-start inline-block border"
+                            style={{ backgroundColor: `${themeColors.primary}10`, color: themeColors.primary, borderColor: `${themeColors.primary}30` }}
+                          >
+                            {lead.assignedTo.role}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs italic" style={{ color: themeColors.textSecondary }}>Unassigned</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-5 text-sm">
+                      <span className="font-semibold block" style={{ color: themeColors.text }}>{lead.source || 'Unknown'}</span>
+                      {lead.tags && lead.tags.length > 0 && (
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {lead.tags.slice(0, 2).map((tag, i) => (
+                            <span key={i} className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-4 px-5 text-sm">
+                      <select
+                        value={lead.status || 'new'}
+                        onChange={(e) => handleStatusChange(lead._id, e.target.value)}
+                        className={`px-2 py-1.5 rounded-md text-[11px] uppercase font-bold border tracking-wider shadow-sm cursor-pointer outline-none transition-colors min-w-[120px] max-w-[150px] ${getStatusBadge(lead.status)}`}
+                      >
+                        {['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed'].map(st => (
+                          <option key={st} value={st} className="text-gray-900 bg-white dark:bg-gray-800 dark:text-white uppercase font-semibold">
+                            {st.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex flex-col gap-2.5 min-w-[220px] max-w-[280px]">
+                        {/* Latest Remark Section */}
+                        {lead.remarks && lead.remarks.length > 0 ? (
+                          <div 
+                            onClick={() => { setHistoryLead(lead); setIsHistoryModalOpen(true); }}
+                            className="p-2.5 rounded-lg border shadow-sm transition-all hover:shadow-md cursor-pointer group hover:bg-black/5 dark:hover:bg-white/5" 
+                            style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: themeColors.primary }}></span>
+                                <span className="font-bold text-[10px] uppercase tracking-wider" style={{ color: themeColors.primary }}>Latest Remark</span>
+                              </div>
+                              <span className="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColors.primary }}>View History</span>
+                            </div>
+                            <p className="text-xs leading-relaxed line-clamp-2" style={{ color: themeColors.text }} title={lead.remarks[lead.remarks.length - 1].note}>
+                              {lead.remarks[lead.remarks.length - 1].note}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-2 rounded-lg border border-dashed flex items-center justify-center" style={{ borderColor: themeColors.border, backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                            <span className="text-xs italic" style={{ color: themeColors.textSecondary }}>No remarks yet</span>
+                          </div>
+                        )}
+                        
+                        {/* Follow-Up Section */}
+                        {lead.followUpDate ? (
+                          <div className="flex items-center gap-2 p-2 rounded-lg border" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+                            <div className="p-1.5 rounded-md" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#d97706' }}>
+                              <FaCalendarPlus className="text-xs" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#b45309' }}>Next Follow-Up</span>
+                              <span className="text-xs font-bold" style={{ color: '#92400e' }}>
+                                {new Date(lead.followUpDate).toLocaleString('en-IN', { 
+                                  day: '2-digit', month: 'short', year: 'numeric', 
+                                  hour: '2-digit', minute: '2-digit', hour12: true 
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-medium italic px-1" style={{ color: themeColors.textSecondary }}>
+                            No follow-up scheduled
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] font-semibold mt-1 uppercase" style={{ color: getPriorityColor(lead.priority) }}>
-                        {lead.priority || 'Normal'} Priority
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-5">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium" style={{ color: themeColors.textSecondary }}>{lead.email}</span>
-                      <span className="text-xs mt-0.5" style={{ color: themeColors.text }}>{lead.phone}</span>
-                      {/* Integrations (WhatsApp / Call) */}
-                      {lead.integrations && (
-                        <div className="flex gap-2 mt-2">
-                          {lead.integrations.whatsappLink && (
-                            <button onClick={() => setWaModalLead(lead)} 
-                               className="text-[#25D366] hover:scale-110 transition-transform p-1 rounded-full bg-[#25D366]/10"
-                               title="Chat on WhatsApp">
-                              <FaWhatsapp />
-                            </button>
-                          )}
-                          {lead.integrations.callUri && (
-                            <a href={lead.integrations.callUri} 
-                               className="text-blue-500 hover:scale-110 transition-transform p-1 rounded-full bg-blue-500/10"
-                               title="Make a Call">
-                              <FaPhoneAlt />
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-5">
-                    {lead.assignedTo ? (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium" style={{ color: themeColors.text }}>{lead.assignedTo.name}</span>
-                        <span 
-                          className="text-[10px] uppercase tracking-wider font-bold mt-1 px-2 py-0.5 rounded-md self-start inline-block border"
-                          style={{ backgroundColor: `${themeColors.primary}10`, color: themeColors.primary, borderColor: `${themeColors.primary}30` }}
+                    </td>
+                    <td className="py-4 px-5 text-xs font-medium whitespace-nowrap" style={{ color: themeColors.textSecondary }}>
+                      {new Date(lead.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex justify-start items-center gap-2 flex-wrap min-w-[160px]">
+                        <button 
+                          onClick={() => openAssignModal(lead)}
+                          className="p-2 rounded-md transition-all hover:scale-110"
+                          style={{ color: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
+                          title="Assign Lead"
                         >
-                          {lead.assignedTo.role}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-xs italic" style={{ color: themeColors.textSecondary }}>Unassigned</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-5 text-sm">
-                    <span className="font-semibold block" style={{ color: themeColors.text }}>{lead.source || 'Unknown'}</span>
-                    {lead.tags && lead.tags.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {lead.tags.slice(0, 2).map((tag, i) => (
-                          <span key={i} className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-4 px-5 text-sm">
-                    <select
-                      value={lead.status || 'new'}
-                      onChange={(e) => handleStatusChange(lead._id, e.target.value)}
-                      className={`px-2 py-1.5 rounded-md text-[11px] uppercase font-bold border tracking-wider shadow-sm cursor-pointer outline-none transition-colors min-w-[120px] max-w-[150px] ${getStatusBadge(lead.status)}`}
-                    >
-                      {['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed'].map(st => (
-                        <option key={st} value={st} className="text-gray-900 bg-white dark:bg-gray-800 dark:text-white uppercase font-semibold">
-                          {st.replace('_', ' ')}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="py-4 px-5">
-                    <div className="flex flex-col gap-2.5 min-w-[220px] max-w-[280px]">
-                      {/* Latest Remark Section */}
-                      {lead.remarks && lead.remarks.length > 0 ? (
-                        <div 
-                          onClick={() => { setHistoryLead(lead); setIsHistoryModalOpen(true); }}
-                          className="p-2.5 rounded-lg border shadow-sm transition-all hover:shadow-md cursor-pointer group hover:bg-black/5 dark:hover:bg-white/5" 
-                          style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+                          <FaUserPlus />
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleDeleteLead(lead._id)}
+                          className="p-2 rounded-md transition-all hover:scale-110"
+                          style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                          title="Delete Lead"
                         >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: themeColors.primary }}></span>
-                              <span className="font-bold text-[10px] uppercase tracking-wider" style={{ color: themeColors.primary }}>Latest Remark</span>
-                            </div>
-                            <span className="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColors.primary }}>View History</span>
-                          </div>
-                          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: themeColors.text }} title={lead.remarks[lead.remarks.length - 1].note}>
-                            {lead.remarks[lead.remarks.length - 1].note}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="p-2 rounded-lg border border-dashed flex items-center justify-center" style={{ borderColor: themeColors.border, backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                          <span className="text-xs italic" style={{ color: themeColors.textSecondary }}>No remarks yet</span>
-                        </div>
-                      )}
-                      
-                      {/* Follow-Up Section */}
-                      {lead.followUpDate ? (
-                        <div className="flex items-center gap-2 p-2 rounded-lg border" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.2)' }}>
-                          <div className="p-1.5 rounded-md" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#d97706' }}>
-                            <FaCalendarPlus className="text-xs" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#b45309' }}>Next Follow-Up</span>
-                            <span className="text-xs font-bold" style={{ color: '#92400e' }}>
-                              {new Date(lead.followUpDate).toLocaleString('en-IN', { 
-                                day: '2-digit', month: 'short', year: 'numeric', 
-                                hour: '2-digit', minute: '2-digit', hour12: true 
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] font-medium italic px-1" style={{ color: themeColors.textSecondary }}>
-                          No follow-up scheduled
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-5 text-xs font-medium whitespace-nowrap" style={{ color: themeColors.textSecondary }}>
-                    {new Date(lead.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td className="py-4 px-5">
-                    <div className="flex justify-start items-center gap-2 flex-wrap min-w-[160px]">
-                      <button 
-                        onClick={() => openAssignModal(lead)}
-                        className="p-2 rounded-md transition-all hover:scale-110"
-                        style={{ color: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
-                        title="Assign Lead"
-                      >
-                        <FaUserPlus />
-                      </button>
-                      
-                      <button 
-                        onClick={() => handleDeleteLead(lead._id)}
-                        className="p-2 rounded-md transition-all hover:scale-110"
-                        style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
-                        title="Delete Lead"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center">
+                  <td colSpan="9" className="py-12 text-center">
                     <p className="font-medium" style={{ color: themeColors.textSecondary }}>No leads found matching your criteria.</p>
                   </td>
                 </tr>
