@@ -4,6 +4,7 @@ import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import SearchableSelect from "../components/SearchableSelect";
 import {
   FaTrashAlt,
   FaUsers,
@@ -1085,30 +1086,23 @@ export default function BulkDeleteStaffData() {
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-              {/* Target Assignee Dropdown */}
-              <div className="flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-xl px-3 py-2">
-                <FaUserCheck className="text-blue-400 text-xs shrink-0" />
-                <select
-                  value={targetAssigneeId}
-                  onChange={(e) => setTargetAssigneeId(e.target.value)}
-                  className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer w-full sm:w-56 truncate"
-                >
-                  <option value="" className="bg-slate-900 text-gray-400">
-                    -- Select Target Staff Member --
-                  </option>
-                  {staffList
-                    .filter((s) => s.active !== false)
-                    .map((s) => (
-                      <option
-                        key={s._id}
-                        value={s._id}
-                        className="bg-slate-900 text-white"
-                      >
-                        {s.name} ({s.role}) • {s.totalLeads || 0} leads
-                      </option>
-                    ))}
-                </select>
-              </div>
+              {/* Target Assignee Dropdown with Search */}
+              <SearchableSelect
+                options={staffList
+                  .filter((s) => s.active !== false)
+                  .map((s) => ({
+                    value: s._id,
+                    label: `${s.name} (${s.role}) • ${s.totalLeads || 0} leads`,
+                  }))}
+                value={targetAssigneeId}
+                onChange={(val) => setTargetAssigneeId(val)}
+                placeholder="Search staff by name or role..."
+                defaultLabel="-- Select Target Staff Member --"
+                icon={FaUserCheck}
+                direction="up"
+                dark={true}
+                className="w-full sm:w-64"
+              />
 
               {/* Button 1: Reassign Checked Leads */}
               <button
