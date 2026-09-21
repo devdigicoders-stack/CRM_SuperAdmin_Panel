@@ -10,6 +10,7 @@ const ROLES = [
   { id: "accountant", label: "Accountant" },
   { id: "sales", label: "Sales Representative" },
   { id: "calling", label: "Calling Agent" },
+  { id: "telecaller", label: "Telecaller / Screening Team" },
   { id: "installation", label: "Installer" },
   { id: "crmuser", label: "CRM User" },
   { id: "stock", label: "Stock Manager" }
