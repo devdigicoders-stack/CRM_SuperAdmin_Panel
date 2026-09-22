@@ -49,9 +49,20 @@ export const AuthProvider = ({ children }) => {
             const updatedAdmin = { ...parsedUser, ...latestUser, token: savedToken };
             setAdmin(updatedAdmin);
             localStorage.setItem(USER_KEY, JSON.stringify(updatedAdmin));
+          } else {
+            setAdmin(null);
+            setToken(null);
+            localStorage.removeItem(USER_KEY);
+            localStorage.removeItem(TOKEN_KEY);
           }
         })
-        .catch(err => console.error("Error fetching fresh profile:", err));
+        .catch(err => {
+          console.error("Error fetching fresh profile:", err);
+          setAdmin(null);
+          setToken(null);
+          localStorage.removeItem(USER_KEY);
+          localStorage.removeItem(TOKEN_KEY);
+        });
     }
 
     setLoading(false);
