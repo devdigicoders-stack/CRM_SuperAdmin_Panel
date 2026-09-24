@@ -40,10 +40,13 @@ const ChangePassword = () => {
       });
       
       if (response.data.status === "success" || response.status === 200) {
-        toast.success(response.data.message || "Password updated successfully");
+        toast.success(response.data.message || "Password updated successfully! Logging out...");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setTimeout(() => {
+          logout();
+        }, 1200);
       }
     } catch (err) {
       console.error(err);
