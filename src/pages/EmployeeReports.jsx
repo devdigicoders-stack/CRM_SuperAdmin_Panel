@@ -6,6 +6,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import SearchableSelect from "../components/SearchableSelect";
 
 const TIMEFRAMES = [
   { id: "today", label: "Today", icon: FaCalendarDay },
@@ -261,19 +262,22 @@ const EmployeeReports = () => {
             <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
               Select Sales Executive
             </label>
-            <select
+            <SearchableSelect
+              options={[
+                { value: "", label: "-- Choose Sales Executive --" },
+                ...salesUsers.map((u) => ({
+                  value: u._id,
+                  label: `${u.name} (${u.email})`,
+                })),
+              ]}
               value={selectedUser}
-              onChange={(e) => setSelectedUser(e.target.value)}
-              className="w-full p-3 rounded-lg border outline-none text-sm font-medium"
-              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
-            >
-              <option value="">-- Choose Sales Executive --</option>
-              {salesUsers.map((u) => (
-                <option key={u._id} value={u._id}>
-                  {u.name} ({u.email})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedUser(val)}
+              placeholder="Search sales executive by name or email..."
+              defaultLabel="-- Choose Sales Executive --"
+              icon={FaUser}
+              themeColors={themeColors}
+              className="w-full"
+            />
           </div>
         </div>
       </div>
