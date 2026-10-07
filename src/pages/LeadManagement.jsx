@@ -1358,12 +1358,31 @@ const LeadManagement = () => {
                     <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Expected Delivery</span>
                     <span className="text-sm font-medium" style={{ color: themeColors.text }}>{historyLead.expectedDeliveryDate ? new Date(historyLead.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</span>
                   </div>
-                   {historyLead.productId && (
+                   {historyLead.items && historyLead.items.length > 0 ? (
+                    <div className="col-span-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <span className="block font-bold text-xs text-amber-700 uppercase tracking-wider mb-2">
+                        Confirmed Products ({historyLead.items.length} {historyLead.items.length === 1 ? 'Item' : 'Items'})
+                      </span>
+                      <div className="space-y-1.5">
+                        {historyLead.items.map((it, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-xs bg-white/70 p-2 rounded-lg border border-amber-100">
+                            <div>
+                              <span className="font-bold text-gray-900">{it.name || it.productId?.name || `Item ${idx + 1}`}</span>
+                              <span className="text-gray-500 ml-2">Qty: {it.quantity || 1} {it.price ? `(₹${it.price.toLocaleString()})` : ''}</span>
+                            </div>
+                            {it.price > 0 && (
+                              <span className="font-bold text-amber-600">₹{((it.price || 0) * (it.quantity || 1)).toLocaleString()}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : historyLead.productId ? (
                     <div className="col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                       <span className="block font-bold text-xs text-blue-600 uppercase tracking-wider mb-1">Catalog Product (Stock Connected)</span>
                       <span className="text-sm font-black text-gray-800">{historyLead.productId.name} (SKU: {historyLead.productId.sku}) [Qty: {historyLead.productQuantity || 1}]</span>
                     </div>
-                  )}
+                  ) : null}
                   {historyLead.productDetails && (
                     <div className="col-span-2">
                       <span className="block font-semibold opacity-75 mb-1" style={{ color: themeColors.textSecondary }}>Product Description Details</span>
