@@ -1,7 +1,8 @@
 import { lazy } from "react";
-import { FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, FaExclamationTriangle, FaChartLine, FaCodeBranch, FaTrashAlt } from "react-icons/fa";
+import { FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, FaExclamationTriangle, FaChartLine, FaCodeBranch, FaTrashAlt, FaCheckCircle } from "react-icons/fa";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
+const ApprovalsManagement = lazy(() => import("../pages/ApprovalsManagement"));
 const CreateAdmin = lazy(() => import("../pages/CreateAdmin"));
 const CreateUser = lazy(() => import("../pages/CreateUser"));
 const GlobalSettings = lazy(() => import("../pages/GlobalSettings"));
@@ -19,6 +20,7 @@ const EmployeeReports = lazy(() => import("../pages/EmployeeReports"));
 
 const routes = [
   { path: "/dashboard", component: Dashboard, name: "Dashboard", icon: FaTachometerAlt, permission: "dashboard" },
+  { path: "/approvals", component: ApprovalsManagement, name: "Approvals & Requests", icon: FaCheckCircle, permission: "dashboard" },
   { path: "/create-admin", component: CreateAdmin, name: "Create Admin", icon: FaUserPlus, superAdminOnly: true },
   { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser, permission: "create-staff" },
   { path: "/branch-management", component: BranchManagement, name: "Branch Management", icon: FaCodeBranch, superAdminOnly: true },
