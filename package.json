@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
-    "@tailwindcss/vite": "^4.1.13",
+    "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.11.0",
     "chart.js": "^4.5.1",
+    "fdir": "^6.4.4",
     "firebase": "^12.14.0",
     "highcharts": "^12.4.0",
     "highcharts-react-official": "^3.2.3",
@@ -30,13 +31,14 @@
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
     "sweetalert2": "^11.26.3",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "tinyglobby": "^0.2.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^5.0.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

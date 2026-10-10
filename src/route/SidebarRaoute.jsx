@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, FaExclamationTriangle, FaChartLine, FaCodeBranch, FaTrashAlt, FaCheckCircle } from "react-icons/fa";
+import { FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, FaExclamationTriangle, FaChartLine, FaCodeBranch, FaTrashAlt, FaCheckCircle, FaHeadset, FaBoxes } from "react-icons/fa";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const ApprovalsManagement = lazy(() => import("../pages/ApprovalsManagement"));
@@ -17,6 +17,8 @@ const UserHistory = lazy(() => import("../pages/UserHistory"));
 const Reports = lazy(() => import("../pages/Reports"));
 const BranchManagement = lazy(() => import("../pages/BranchManagement"));
 const EmployeeReports = lazy(() => import("../pages/EmployeeReports"));
+const TelecallerReports = lazy(() => import("../pages/TelecallerReports"));
+const StockReports = lazy(() => import("../pages/StockReports"));
 
 const routes = [
   { path: "/dashboard", component: Dashboard, name: "Dashboard", icon: FaTachometerAlt, permission: "dashboard" },
@@ -31,6 +33,8 @@ const routes = [
   { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt, permission: "calendar" },
   { path: "/reports", component: Reports, name: "Reports & Analytics", icon: FaChartLine, permission: "reports" },
   { path: "/employee-reports", component: EmployeeReports, name: "Employee Reports", icon: FaUsers, permission: "reports" },
+  { path: "/telecaller-reports", component: TelecallerReports, name: "Telecaller Reports", icon: FaHeadset, permission: "reports" },
+  { path: "/stock-reports", component: StockReports, name: "Stock Reports", icon: FaBoxes, permission: "reports" },
   { path: "/notifications", component: Notifications, name: "Notifications", icon: FaBell },
   { path: "/profile", component: Profile, name: "My Profile", icon: FaUser },
   { path: "/change-password", component: ChangePassword, name: "Change Password", icon: FaLock },
