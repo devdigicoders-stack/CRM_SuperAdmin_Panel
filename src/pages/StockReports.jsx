@@ -1256,46 +1256,46 @@ const StockReports = () => {
                         const isLow = stock > 0 && stock <= min;
 
                         return (
-                          <tr key={p._id || idx} className="hover:bg-black/5 dark:hover:bg-white/5 border-b last:border-b-0" style={{ borderColor: themeColors.border }}>
+                          <tr key={p._id || idx} className="hover:bg-slate-100/70 border-b last:border-b-0 transition-colors" style={{ borderColor: themeColors.border }}>
                             <td className="px-4 py-3">
-                              <div className="font-bold text-slate-900 dark:text-slate-100">{p.name}</div>
-                              <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-bold mt-0.5">
+                              <div className="font-extrabold text-slate-900 text-sm" style={{ color: themeColors.text }}>{p.name}</div>
+                              <div className="text-xs font-mono text-blue-700 font-bold mt-0.5">
                                 SKU: {p.sku}
                               </div>
                             </td>
 
-                            <td className="px-4 py-3 font-medium" style={{ color: themeColors.textSecondary }}>
-                              <div className="font-semibold text-slate-800 dark:text-slate-200">{p.category?.name || "Uncategorized"}</div>
-                              <div className="text-[11px] text-slate-400">{p.brand?.name || "Brand"}</div>
+                            <td className="px-4 py-3 font-medium">
+                              <div className="font-bold text-slate-800 text-xs" style={{ color: themeColors.text }}>{p.category?.name || "Uncategorized"}</div>
+                              <div className="text-[11px] font-semibold text-slate-600">{p.brand?.name || "Brand"}</div>
                             </td>
 
                             <td className="px-4 py-3 text-center font-black text-sm" style={{ color: themeColors.text }}>
-                              {stock} <span className="text-[10px] font-normal text-slate-400">{p.unit?.shortName || "pcs"}</span>
+                              {stock} <span className="text-[10px] font-semibold text-slate-600">{p.unit?.shortName || "pcs"}</span>
                             </td>
 
-                            <td className="px-4 py-3 text-center font-medium text-slate-400">
+                            <td className="px-4 py-3 text-center font-bold text-slate-700">
                               {min}
                             </td>
 
                             <td className="px-4 py-3 text-center">
                               {isOut ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400">
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-900 border border-rose-300 shadow-xs">
                                   Out of Stock
                                 </span>
                               ) : isLow ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-xs">
                                   Low Stock ({stock})
                                 </span>
                               ) : (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-xs">
                                   In Stock
                                 </span>
                               )}
                             </td>
 
-                            <td className="px-4 py-3 text-right font-medium">₹{p.purchasePrice || 0}</td>
-                            <td className="px-4 py-3 text-right font-medium text-emerald-600">₹{p.sellingPrice || 0}</td>
-                            <td className="px-4 py-3 text-right font-black text-amber-600 dark:text-amber-400">
+                            <td className="px-4 py-3 text-right font-bold text-slate-800">₹{p.purchasePrice || 0}</td>
+                            <td className="px-4 py-3 text-right font-bold text-emerald-700">₹{p.sellingPrice || 0}</td>
+                            <td className="px-4 py-3 text-right font-black text-amber-700">
                               ₹{Math.round(stock * (p.purchasePrice || 0)).toLocaleString()}
                             </td>
 

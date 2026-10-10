@@ -46,20 +46,20 @@ const TIMEFRAMES = [
 ];
 
 const STATUS_CONFIG = {
-  new: { label: "New", color: "#3b82f6", bg: "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" },
-  unscreened: { label: "Unscreened", color: "#6366f1", bg: "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" },
-  screening_in_progress: { label: "Screening In Progress", color: "#8b5cf6", bg: "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" },
-  interested: { label: "Interested", color: "#0ea5e9", bg: "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400" },
-  callback: { label: "Callback", color: "#f59e0b", bg: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" },
-  qualified: { label: "Qualified", color: "#10b981", bg: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" },
-  assigned_to_branch: { label: "Handed Over to Branch", color: "#14b8a6", bg: "bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400" },
-  converted: { label: "Converted to Sale", color: "#16a34a", bg: "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400" },
-  closed: { label: "Closed", color: "#059669", bg: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" },
-  not_interested: { label: "Not Interested", color: "#94a3b8", bg: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" },
-  invalid_number: { label: "Invalid Number", color: "#ef4444", bg: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400" },
-  disqualified: { label: "Disqualified", color: "#f43f5e", bg: "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" },
-  call_done: { label: "Call Done", color: "#64748b", bg: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" },
-  other: { label: "Other", color: "#6b7280", bg: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400" }
+  new: { label: "New", color: "#2563eb", bg: "bg-blue-100 text-blue-900 border border-blue-200" },
+  unscreened: { label: "Unscreened", color: "#4f46e5", bg: "bg-indigo-100 text-indigo-900 border border-indigo-200" },
+  screening_in_progress: { label: "Screening In Progress", color: "#7c3aed", bg: "bg-purple-100 text-purple-900 border border-purple-200" },
+  interested: { label: "Interested", color: "#0284c7", bg: "bg-sky-100 text-sky-900 border border-sky-300" },
+  callback: { label: "Callback", color: "#d97706", bg: "bg-amber-100 text-amber-900 border border-amber-300" },
+  qualified: { label: "Qualified", color: "#059669", bg: "bg-emerald-100 text-emerald-900 border border-emerald-300" },
+  assigned_to_branch: { label: "Handed Over to Branch", color: "#0d9488", bg: "bg-teal-100 text-teal-900 border border-teal-300" },
+  converted: { label: "Converted to Sale", color: "#16a34a", bg: "bg-green-100 text-green-900 border border-green-300" },
+  closed: { label: "Closed", color: "#047857", bg: "bg-emerald-100 text-emerald-900 border border-emerald-300" },
+  not_interested: { label: "Not Interested", color: "#475569", bg: "bg-slate-200 text-slate-800 border border-slate-300" },
+  invalid_number: { label: "Invalid Number", color: "#dc2626", bg: "bg-red-100 text-red-900 border border-red-300" },
+  disqualified: { label: "Disqualified", color: "#e11d48", bg: "bg-rose-100 text-rose-900 border border-rose-300" },
+  call_done: { label: "Call Done", color: "#334155", bg: "bg-slate-200 text-slate-800 border border-slate-300" },
+  other: { label: "Other", color: "#4b5563", bg: "bg-gray-200 text-gray-800 border border-gray-300" }
 };
 
 const TelecallerReports = () => {
@@ -957,10 +957,10 @@ const TelecallerReports = () => {
                   title: "Today's Follow-up Leads",
                   subtitle: "Scheduled for calling today"
                 })}
-                className="p-2.5 rounded-xl bg-blue-500/5 hover:bg-blue-500/15 transition cursor-pointer border border-blue-500/20"
+                className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 transition cursor-pointer border border-blue-200"
               >
-                <div className="text-xs text-blue-600 font-bold">Today</div>
-                <div className="text-xl font-black text-blue-700 dark:text-blue-300 mt-1">{summary.todayFollowups}</div>
+                <div className="text-xs text-blue-700 font-extrabold">Today</div>
+                <div className="text-xl font-black text-blue-900 mt-1">{summary.todayFollowups}</div>
               </div>
               <div
                 onClick={() => handleOpenDrilldown({
@@ -968,10 +968,10 @@ const TelecallerReports = () => {
                   title: "Overdue / Missed Follow-ups",
                   subtitle: "Follow-up dates in the past needing immediate attention"
                 })}
-                className="p-2.5 rounded-xl bg-rose-500/5 hover:bg-rose-500/15 transition cursor-pointer border border-rose-500/20"
+                className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 transition cursor-pointer border border-rose-200"
               >
-                <div className="text-xs text-rose-600 font-bold">Overdue</div>
-                <div className="text-xl font-black text-rose-700 dark:text-rose-300 mt-1">{summary.overdueFollowups}</div>
+                <div className="text-xs text-rose-700 font-extrabold">Overdue</div>
+                <div className="text-xl font-black text-rose-900 mt-1">{summary.overdueFollowups}</div>
               </div>
               <div
                 onClick={() => handleOpenDrilldown({
@@ -979,10 +979,10 @@ const TelecallerReports = () => {
                   title: "Upcoming Scheduled Follow-ups",
                   subtitle: "All pending follow-ups in queue"
                 })}
-                className="p-2.5 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/15 transition cursor-pointer border border-emerald-500/20"
+                className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer border border-emerald-200"
               >
-                <div className="text-xs text-emerald-600 font-bold">Upcoming</div>
-                <div className="text-xl font-black text-emerald-700 dark:text-emerald-300 mt-1">{summary.upcomingFollowups}</div>
+                <div className="text-xs text-emerald-700 font-extrabold">Upcoming</div>
+                <div className="text-xl font-black text-emerald-900 mt-1">{summary.upcomingFollowups}</div>
               </div>
             </div>
           </div>
@@ -992,7 +992,7 @@ const TelecallerReports = () => {
               title: "Overdue Follow-ups Calling Queue",
               subtitle: "Immediate priority leads with passed follow-up dates"
             })}
-            className="mt-4 text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1 hover:underline cursor-pointer"
+            className="mt-4 text-xs font-bold text-rose-700 flex items-center justify-center gap-1 hover:underline cursor-pointer"
           >
             <FaExclamationTriangle /> View {summary.overdueFollowups} Overdue Follow-ups in Drilldown
           </button>
@@ -1003,22 +1003,22 @@ const TelecallerReports = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: themeColors.textSecondary }}>
-                <FaAward className="text-purple-500" /> Accrued Telecaller Incentive
+                <FaAward className="text-purple-600" /> Accrued Telecaller Incentive
               </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600">
+              <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
                 Performance Pay
               </span>
             </div>
-            <div className="text-3xl font-black text-purple-600 dark:text-purple-400 mt-2">
+            <div className="text-3xl font-black text-purple-700 mt-2">
               ₹{Number(summary.totalIncentive).toLocaleString()}
             </div>
-            <p className="text-xs mt-1" style={{ color: themeColors.textSecondary }}>
+            <p className="text-xs mt-1 font-medium text-slate-700" style={{ color: themeColors.textSecondary }}>
               Calculated automatically from {summary.convertedCount} converted sales generated through qualified telecaller routing.
             </p>
           </div>
           <div className="mt-4 pt-3 border-t flex justify-between items-center text-xs font-bold" style={{ borderColor: themeColors.border }}>
             <span style={{ color: themeColors.textSecondary }}>Total Pipeline Revenue:</span>
-            <span className="text-emerald-600 font-extrabold">₹{Number(summary.totalDealValue).toLocaleString()}</span>
+            <span className="text-emerald-700 font-extrabold">₹{Number(summary.totalDealValue).toLocaleString()}</span>
           </div>
         </div>
 
@@ -1027,13 +1027,13 @@ const TelecallerReports = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: themeColors.textSecondary }}>
-                <FaCodeBranch className="text-teal-500" /> Branch Routing Health
+                <FaCodeBranch className="text-teal-600" /> Branch Routing Health
               </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600">
+              <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-200">
                 {Object.keys(analyticsData?.branchBreakdown || {}).length} Branches Active
               </span>
             </div>
-            <div className="text-3xl font-black text-teal-600 dark:text-teal-400 mt-2">
+            <div className="text-3xl font-black text-teal-800 mt-2">
               {summary.qualifiedCount} Leads Routed
             </div>
             <p className="text-xs mt-1" style={{ color: themeColors.textSecondary }}>
@@ -1441,78 +1441,82 @@ const TelecallerReports = () => {
                         return (
                           <tr
                             key={lead._id || idx}
-                            className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-b last:border-b-0"
+                            className="hover:bg-slate-100/70 transition-colors border-b last:border-b-0"
                             style={{ borderColor: themeColors.border }}
                           >
                             <td className="px-4 py-3">
-                              <div className="font-bold text-slate-900 dark:text-slate-100">{lead.name || "Unnamed"}</div>
-                              <div className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 mt-0.5">
-                                <FaPhoneAlt className="text-[9px]" /> {lead.phone}
+                              <div className="font-extrabold text-slate-900 text-sm" style={{ color: themeColors.text }}>
+                                {lead.name || "Unnamed"}
+                              </div>
+                              <div className="text-xs font-bold text-blue-700 flex items-center gap-1.5 mt-0.5">
+                                <FaPhoneAlt className="text-[10px]" /> {lead.phone}
                               </div>
                             </td>
 
-                            <td className="px-4 py-3 font-medium" style={{ color: themeColors.textSecondary }}>
-                              <div className="flex items-center gap-1">
-                                <FaMapMarkerAlt className="text-rose-500 text-[10px]" />
-                                <span className="font-bold text-slate-800 dark:text-slate-200">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1.5">
+                                <FaMapMarkerAlt className="text-rose-500 text-xs shrink-0" />
+                                <span className="font-bold text-slate-800 text-xs" style={{ color: themeColors.text }}>
                                   {lead.city || lead.state ? (
                                     <>
                                       {lead.city && <span>{lead.city}</span>}
-                                      {lead.state && <span className="text-slate-400 ml-1">({lead.state})</span>}
-                                      {lead.pinCode && <span className="text-slate-400 ml-1">• {lead.pinCode}</span>}
+                                      {lead.state && <span className="text-slate-600 font-semibold ml-1">({lead.state})</span>}
+                                      {lead.pinCode && <span className="text-slate-600 font-semibold ml-1">• {lead.pinCode}</span>}
                                     </>
-                                  ) : "N/A"}
+                                  ) : (
+                                    <span className="text-slate-400 font-medium italic">N/A</span>
+                                  )}
                                 </span>
                               </div>
                             </td>
 
                             <td className="px-4 py-3">
-                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize ${statusConf.bg}`}>
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-black capitalize inline-block shadow-xs ${statusConf.bg}`}>
                                 {statusConf.label}
                               </span>
                             </td>
 
-                            <td className="px-4 py-3 font-semibold" style={{ color: themeColors.text }}>
+                            <td className="px-4 py-3 font-bold text-slate-800 text-xs" style={{ color: themeColors.text }}>
                               {lead.originTelecaller?.name || lead.assignedTo?.name || "Unassigned"}
                             </td>
 
-                            <td className="px-4 py-3 font-bold text-teal-600 dark:text-teal-400">
+                            <td className="px-4 py-3 font-extrabold text-teal-800 text-xs">
                               {lead.assignedBranch?.name || "Pending Routing"}
                             </td>
 
                             <td className="px-4 py-3">
                               {lead.followUpDate ? (
                                 <div>
-                                  <div className="font-bold text-slate-800 dark:text-slate-200">
+                                  <div className="font-bold text-slate-900 text-xs" style={{ color: themeColors.text }}>
                                     {new Date(lead.followUpDate).toLocaleDateString()}
                                   </div>
                                   {isFollowupOverdue && (
-                                    <span className="text-[10px] font-black text-rose-600 bg-rose-500/10 px-1.5 py-0.2 rounded-full inline-block mt-0.5">
+                                    <span className="text-[10px] font-black text-rose-800 bg-rose-100 border border-rose-300 px-1.5 py-0.5 rounded-full inline-block mt-0.5">
                                       Overdue
                                     </span>
                                   )}
                                   {isFollowupToday && (
-                                    <span className="text-[10px] font-black text-amber-600 bg-amber-500/10 px-1.5 py-0.2 rounded-full inline-block mt-0.5">
+                                    <span className="text-[10px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-full inline-block mt-0.5">
                                       Today
                                     </span>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-slate-400 italic">None</span>
+                                <span className="text-slate-400 font-medium italic text-xs">None</span>
                               )}
                             </td>
 
                             <td className="px-4 py-3 max-w-xs">
                               {latestRemark ? (
-                                <div className="truncate text-[11px]" title={latestRemark.note} style={{ color: themeColors.text }}>
-                                  <span className="font-bold text-slate-400">[{new Date(latestRemark.createdAt).toLocaleDateString()}]:</span> {latestRemark.note}
+                                <div className="truncate text-xs font-medium text-slate-800" title={latestRemark.note} style={{ color: themeColors.text }}>
+                                  <span className="font-bold text-slate-600">[{new Date(latestRemark.createdAt).toLocaleDateString()}]:</span> {latestRemark.note}
                                 </div>
                               ) : (
-                                <span className="text-slate-400 italic text-[11px]">No remarks logged</span>
+                                <span className="text-slate-400 italic text-xs">No remarks logged</span>
                               )}
                             </td>
 
-                            <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                            <td className="px-4 py-3 text-right font-black text-emerald-700 text-sm">
                               ₹{Number(lead.dealValue || 0).toLocaleString()}
                             </td>
 
