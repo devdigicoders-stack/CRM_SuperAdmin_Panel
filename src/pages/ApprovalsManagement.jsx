@@ -100,6 +100,18 @@ export default function ApprovalsManagement() {
 
   // --- Transfer Actions ---
   const handleApproveTransfer = async (lead) => {
+    let installers = [];
+    try {
+      const instRes = await axios.get(`${baseUrl}/users/installers`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      installers = instRes.data?.data?.users || [];
+    } catch (e) {
+      console.warn("Could not load installers:", e);
+    }
+
+    const installerOptionsHtml = installers.map(i => `<option value="${i._id}">${i.name} (${i.phone || i.email})</option>`).join('');
+
     const itemsListHtml = lead.stockCheck?.items?.map(it => `
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px;">
         <div>
@@ -112,7 +124,7 @@ export default function ApprovalsManagement() {
       </div>
     `).join('') || '';
 
-    const { value: remarks } = await Swal.fire({
+    const { value: formValues } = await Swal.fire({
       title: 'Approve Transfer & Deduct Stock?',
       html: `
         <div style="text-align: left; font-size: 14px;">
@@ -126,6 +138,11 @@ export default function ApprovalsManagement() {
           <p style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
             Respective warehouse stock balances will be deducted and recorded in the Stock Panel.
           </p>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: #374151;">Assign Installer (Optional)</label>
+          <select id="swal-installer-id" style="width: 100%; height: 38px; margin-bottom: 12px; padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; background: white; outline: none;">
+            <option value="">-- All / Unassigned (Installation Team) --</option>
+            ${installerOptionsHtml}
+          </select>
           <label style="display: block; font-weight: 600; margin-bottom: 4px; color: #374151;">Approval Remarks (Optional)</label>
           <textarea id="swal-approval-remarks" class="swal2-textarea" placeholder="E.g., Approved and dispatched via fast courier..." style="width: 100%; height: 60px; margin: 0; padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;"></textarea>
         </div>
@@ -136,20 +153,26 @@ export default function ApprovalsManagement() {
       confirmButtonColor: '#10B981',
       cancelButtonText: 'Cancel',
       preConfirm: () => {
-        return document.getElementById('swal-approval-remarks').value;
+        return {
+          remarks: document.getElementById('swal-approval-remarks')?.value || '',
+          installerId: document.getElementById('swal-installer-id')?.value || undefined
+        };
       }
     });
 
-    if (remarks !== undefined) {
+    if (formValues !== undefined) {
       try {
-        const res = await axios.put(`${baseUrl}/accounts/leads/${lead._id}/approve-transfer`, {
-          remarks
-        }, {
+        const payload = { remarks: formValues.remarks };
+        if (formValues.installerId) {
+          payload.installerId = formValues.installerId;
+        }
+
+        const res = await axios.put(`${baseUrl}/accounts/leads/${lead._id}/approve-transfer`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         if (res.data.status === 'success') {
-          Swal.fire('Approved!', 'Transfer approved and stock deducted from warehouse.', 'success');
+          Swal.fire('Approved!', 'Transfer approved and lead is now available in Installation Panel.', 'success');
           fetchTransfers();
         }
       } catch (err) {

@@ -338,7 +338,7 @@ const LeadManagement = () => {
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const selectedStaff = staffList.find(s => s._id === selectedAssigneeId);
-      const isInstaller = selectedStaff?.role === 'installer';
+      const isInstaller = selectedStaff?.role === 'installation' || selectedStaff?.role === 'installer';
 
       const url = isInstaller 
         ? `${baseUrl}/installation/leads/${selectedLead._id}/assign-rep`
