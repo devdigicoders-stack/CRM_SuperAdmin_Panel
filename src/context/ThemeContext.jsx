@@ -1,91 +1,123 @@
 // src/context/ThemeContext.jsx
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 
-// 🎨 Premium Color Palettes
-const colorPalettes = {
+// 🎨 Premium Color Palettes for SuperAdmin Panel
+export const colorPalettes = {
   corporate: {
-    primary: "#1a365d",
-    secondary: "#2d3748",
-    accent: "#d69e2e",
-    success: "#38a169",
-    warning: "#dd6b20",
-    danger: "#e53e3e",
-    info: "#3182ce",
-    backgroundLight: "#f7fafc",
-    backgroundDark: "#1a202c",
-    surfaceLight: "#ffffff",
-    surfaceDark: "#2d3748",
-    textLight: "#2d3748",
-    textDark: "#f7fafc",
-    borderLight: "#e2e8f0",
-    borderDark: "#4a5568",
-    hoverLight: "#edf2f7",
-    hoverDark: "#4a5568",
-    activeLight: "#e2e8f0",
-    activeDark: "#4a5568",
-  },
-  luxury: {
-    primary: "#1e3a8a",
-    secondary: "#374151",
-    accent: "#b45309",
-    success: "#047857",
-    warning: "#b45309",
-    danger: "#dc2626",
-    info: "#0369a1",
-    backgroundLight: "#fefefe",
-    backgroundDark: "#111827",
-    surfaceLight: "#ffffff",
-    surfaceDark: "#1f2937",
-    textLight: "#111827",
-    textDark: "#f9fafb",
-    borderLight: "#e5e7eb",
-    borderDark: "#374151",
-    hoverLight: "#f3f4f6",
-    hoverDark: "#374151",
-    activeLight: "#e5e7eb",
-    activeDark: "#374151",
-  },
-  modern: {
-    primary: "#2563eb",
+    id: "corporate",
+    name: "Corporate Blue",
+    description: "Classic enterprise blue with crisp contrast",
+    previewColor: "#2563eb",
+    primary: "#1e40af",
+    primaryLight: "#1e40af",
+    primaryDark: "#3b82f6",
     secondary: "#475569",
+    secondaryLight: "#475569",
+    secondaryDark: "#94a3b8",
     accent: "#f59e0b",
     success: "#10b981",
     warning: "#f59e0b",
     danger: "#ef4444",
     info: "#3b82f6",
     backgroundLight: "#f8fafc",
-    backgroundDark: "#0f172a",
+    backgroundDark: "#0b1329",
     surfaceLight: "#ffffff",
-    surfaceDark: "#1e293b",
-    textLight: "#1e293b",
-    textDark: "#f1f5f9",
+    surfaceDark: "#15203b",
+    textLight: "#0f172a",
+    textDark: "#f8fafc",
     borderLight: "#e2e8f0",
-    borderDark: "#334155",
+    borderDark: "#263554",
     hoverLight: "#f1f5f9",
-    hoverDark: "#334155",
+    hoverDark: "#1e2c4f",
     activeLight: "#e2e8f0",
-    activeDark: "#334155",
+    activeDark: "#263554",
   },
-  minimal: {
-    primary: "#000000",
+  luxury: {
+    id: "luxury",
+    name: "Luxury Indigo",
+    description: "Deep regal indigo with warm gold accents",
+    previewColor: "#6366f1",
+    primary: "#4338ca",
+    primaryLight: "#4338ca",
+    primaryDark: "#818cf8",
     secondary: "#4b5563",
-    accent: "#6b7280",
+    secondaryLight: "#4b5563",
+    secondaryDark: "#9ca3af",
+    accent: "#d97706",
     success: "#059669",
     warning: "#d97706",
     danger: "#dc2626",
-    info: "#2563eb",
-    backgroundLight: "#ffffff",
-    backgroundDark: "#000000",
-    surfaceLight: "#f9fafb",
-    surfaceDark: "#111827",
+    info: "#0284c7",
+    backgroundLight: "#fafafa",
+    backgroundDark: "#0f111a",
+    surfaceLight: "#ffffff",
+    surfaceDark: "#181b29",
     textLight: "#111827",
     textDark: "#f9fafb",
-    borderLight: "#d1d5db",
-    borderDark: "#374151",
+    borderLight: "#e5e7eb",
+    borderDark: "#2b3046",
     hoverLight: "#f3f4f6",
-    hoverDark: "#374151",
+    hoverDark: "#222638",
     activeLight: "#e5e7eb",
-    activeDark: "#374151",
+    activeDark: "#2b3046",
+  },
+  modern: {
+    id: "modern",
+    name: "Modern Emerald",
+    description: "Vibrant emerald green with dark obsidian",
+    previewColor: "#10b981",
+    primary: "#059669",
+    primaryLight: "#059669",
+    primaryDark: "#34d399",
+    secondary: "#475569",
+    secondaryLight: "#475569",
+    secondaryDark: "#94a3b8",
+    accent: "#f59e0b",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    backgroundLight: "#f8fafc",
+    backgroundDark: "#0c151d",
+    surfaceLight: "#ffffff",
+    surfaceDark: "#15232d",
+    textLight: "#0f172a",
+    textDark: "#f1f5f9",
+    borderLight: "#e2e8f0",
+    borderDark: "#223543",
+    hoverLight: "#f1f5f9",
+    hoverDark: "#1b2c3a",
+    activeLight: "#e2e8f0",
+    activeDark: "#223543",
+  },
+  minimal: {
+    id: "minimal",
+    name: "Minimal Monochrome",
+    description: "Ultra clean high contrast monochrome",
+    previewColor: "#475569",
+    primary: "#0f172a",
+    primaryLight: "#0f172a",
+    primaryDark: "#f8fafc",
+    secondary: "#64748b",
+    secondaryLight: "#64748b",
+    secondaryDark: "#a1a1aa",
+    accent: "#71717a",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    backgroundLight: "#ffffff",
+    backgroundDark: "#09090b",
+    surfaceLight: "#f4f4f5",
+    surfaceDark: "#18181b",
+    textLight: "#09090b",
+    textDark: "#fafafa",
+    borderLight: "#e4e4e7",
+    borderDark: "#27272a",
+    hoverLight: "#f4f4f5",
+    hoverDark: "#27272a",
+    activeLight: "#e4e4e7",
+    activeDark: "#27272a",
   }
 };
 
@@ -100,98 +132,133 @@ export const ThemeProvider = ({ children }) => {
     return localStorage.getItem("palette") || "corporate";
   };
 
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [theme, setThemeState] = useState(getInitialTheme);
   const [palette, setPalette] = useState(getInitialPalette);
 
+  // Compute resolved theme (handles 'system' mode)
+  const getResolvedTheme = useCallback((currentTheme) => {
+    if (currentTheme === "system") {
+      if (typeof window !== "undefined" && window.matchMedia) {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      return "light";
+    }
+    return currentTheme === "dark" ? "dark" : "light";
+  }, []);
+
+  const [resolvedTheme, setResolvedTheme] = useState(() => getResolvedTheme(getInitialTheme()));
+
+  // Listen to system dark mode changes if theme is "system"
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleMediaChange = (e) => {
+      if (theme === "system") {
+        setResolvedTheme(e.matches ? "dark" : "light");
+      }
+    };
+
+    setResolvedTheme(getResolvedTheme(theme));
+
+    mediaQuery.addEventListener("change", handleMediaChange);
+    return () => mediaQuery.removeEventListener("change", handleMediaChange);
+  }, [theme, getResolvedTheme]);
+
+  // Set theme explicitly ('light' | 'dark' | 'system')
+  const setTheme = useCallback((newTheme) => {
+    setThemeState(newTheme);
+    localStorage.setItem("theme", newTheme);
+  }, []);
+
+  // Quick toggle between light & dark
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const active = getResolvedTheme(prev);
+      const next = active === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", next);
+      return next;
+    });
+  }, [getResolvedTheme]);
+
+  const changePalette = useCallback((newPalette) => {
+    if (colorPalettes[newPalette]) {
+      setPalette(newPalette);
+      localStorage.setItem("palette", newPalette);
+    }
+  }, []);
+
+  // Current palette with fallback
+  const currentPalette = colorPalettes[palette] || colorPalettes.corporate;
+  const isDark = resolvedTheme === "dark";
+
+  // Build active theme colors
+  const currentThemeColors = useMemo(() => {
+    return {
+      mode: isDark ? "dark" : "light",
+      isDark,
+      primary: isDark ? currentPalette.primaryDark : currentPalette.primaryLight,
+      secondary: isDark ? currentPalette.secondaryDark : currentPalette.secondaryLight,
+      accent: currentPalette.accent,
+      success: currentPalette.success,
+      warning: currentPalette.warning,
+      danger: currentPalette.danger,
+      info: currentPalette.info,
+      background: isDark ? currentPalette.backgroundDark : currentPalette.backgroundLight,
+      surface: isDark ? currentPalette.surfaceDark : currentPalette.surfaceLight,
+      text: isDark ? currentPalette.textDark : currentPalette.textLight,
+      textSecondary: isDark ? currentPalette.secondaryDark : currentPalette.secondaryLight,
+      border: isDark ? currentPalette.borderDark : currentPalette.borderLight,
+      hover: {
+        background: isDark ? currentPalette.hoverDark : currentPalette.hoverLight,
+        text: isDark ? currentPalette.textDark : currentPalette.textLight,
+      },
+      active: {
+        background: isDark ? currentPalette.activeDark : currentPalette.activeLight,
+        text: isDark ? currentPalette.primaryDark : currentPalette.primaryLight,
+      },
+      onPrimary: isDark && palette === "minimal" ? "#09090b" : "#ffffff",
+    };
+  }, [isDark, currentPalette, palette]);
+
+  // Apply .dark class, data-theme, color-scheme, and CSS variables to document.documentElement
   useEffect(() => {
     const html = document.documentElement;
 
-    if (theme === "dark") {
+    if (resolvedTheme === "dark") {
       html.classList.add("dark");
       html.setAttribute("data-theme", "dark");
+      html.style.colorScheme = "dark";
     } else {
       html.classList.remove("dark");
       html.setAttribute("data-theme", "light");
+      html.style.colorScheme = "light";
     }
+
+    // Set CSS custom variables
+    html.style.setProperty("--color-primary", currentThemeColors.primary);
+    html.style.setProperty("--color-background", currentThemeColors.background);
+    html.style.setProperty("--color-surface", currentThemeColors.surface);
+    html.style.setProperty("--color-text", currentThemeColors.text);
+    html.style.setProperty("--color-text-secondary", currentThemeColors.textSecondary);
+    html.style.setProperty("--color-border", currentThemeColors.border);
 
     localStorage.setItem("theme", theme);
     localStorage.setItem("palette", palette);
-  }, [theme, palette]);
-
-  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
-
-  const changePalette = (newPalette) => {
-    if (colorPalettes[newPalette]) {
-      setPalette(newPalette);
-    }
-  };
-
-  // Get current palette with fallback
-  const currentPalette = colorPalettes[palette] || colorPalettes.corporate;
-
-  // Theme colors configuration
-  const themeColors = {
-    light: {
-      mode: 'light',
-      primary: currentPalette.primary,
-      secondary: currentPalette.secondary,
-      accent: currentPalette.accent,
-      success: currentPalette.success,
-      warning: currentPalette.warning,
-      danger: currentPalette.danger,
-      info: currentPalette.info,
-      background: currentPalette.backgroundLight,
-      surface: currentPalette.surfaceLight,
-      text: currentPalette.textLight,
-      textSecondary: currentPalette.secondary,
-      border: currentPalette.borderLight,
-      hover: {
-        background: currentPalette.hoverLight,
-        text: currentPalette.textLight,
-      },
-      active: {
-        background: currentPalette.activeLight,
-        text: currentPalette.primary,
-      },
-      onPrimary: '#ffffff',
-    },
-    dark: {
-      mode: 'dark',
-      primary: currentPalette.primary,
-      secondary: currentPalette.secondary,
-      accent: currentPalette.accent,
-      success: currentPalette.success,
-      warning: currentPalette.warning,
-      danger: currentPalette.danger,
-      info: currentPalette.info,
-      background: currentPalette.backgroundDark,
-      surface: currentPalette.surfaceDark,
-      text: currentPalette.textDark,
-      textSecondary: currentPalette.secondary,
-      border: currentPalette.borderDark,
-      hover: {
-        background: currentPalette.hoverDark,
-        text: currentPalette.textDark,
-      },
-      active: {
-        background: currentPalette.activeDark,
-        text: currentPalette.surfaceDark,
-      },
-      onPrimary: '#ffffff',
-    },
-  };
-
-  // Get current theme colors with fallback
-  const currentThemeColors = themeColors[theme] || themeColors.light;
+  }, [resolvedTheme, theme, palette, currentThemeColors]);
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
+        resolvedTheme,
+        isDark,
+        setTheme,
         toggleTheme,
         palette,
         changePalette,
         themeColors: currentThemeColors,
+        colorPalettes,
         availablePalettes: Object.keys(colorPalettes)
       }}
     >

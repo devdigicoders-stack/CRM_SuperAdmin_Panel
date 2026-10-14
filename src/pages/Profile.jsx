@@ -1,12 +1,12 @@
 import { useState, useEffect, memo } from "react";
-import { FaUser, FaSave, FaCamera, FaLock } from "react-icons/fa";
+import { FaUser, FaSave, FaCamera, FaLock, FaSun, FaMoon, FaDesktop } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import axios from "axios";
 
 const Profile = () => {
-  const { themeColors } = useTheme();
+  const { theme, setTheme, themeColors } = useTheme();
   const { token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -225,6 +225,53 @@ const Profile = () => {
               <p className="text-sm text-blue-700 dark:text-blue-300">
                 <strong>Note:</strong> Email address cannot be changed here. To change your password, go to the <a href="/change-password" className="underline font-bold">Change Password</a> page.
               </p>
+            </div>
+          </div>
+
+          {/* Appearance & Theme Preference */}
+          <div className="rounded-xl shadow-sm border p-6" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+            <h3 className="text-lg font-semibold mb-1" style={{ color: themeColors.text }}>Theme & Appearance</h3>
+            <p className="text-xs mb-4" style={{ color: themeColors.textSecondary }}>Customize your SuperAdmin interface mode.</p>
+
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => { setTheme("light"); toast.success("☀️ Light Mode enabled"); }}
+                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${theme === "light" ? "ring-2 font-bold shadow-xs" : "opacity-75 hover:opacity-100"}`}
+                style={{
+                  backgroundColor: themeColors.background,
+                  borderColor: theme === "light" ? themeColors.primary : themeColors.border,
+                }}
+              >
+                <FaSun className="text-amber-500 text-lg" />
+                <span className="text-xs" style={{ color: themeColors.text }}>Light</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setTheme("dark"); toast.success("🌙 Dark Mode enabled"); }}
+                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${theme === "dark" ? "ring-2 font-bold shadow-xs" : "opacity-75 hover:opacity-100"}`}
+                style={{
+                  backgroundColor: themeColors.background,
+                  borderColor: theme === "dark" ? themeColors.primary : themeColors.border,
+                }}
+              >
+                <FaMoon className="text-indigo-400 text-lg" />
+                <span className="text-xs" style={{ color: themeColors.text }}>Dark</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setTheme("system"); toast.success("💻 System preference synced"); }}
+                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${theme === "system" ? "ring-2 font-bold shadow-xs" : "opacity-75 hover:opacity-100"}`}
+                style={{
+                  backgroundColor: themeColors.background,
+                  borderColor: theme === "system" ? themeColors.primary : themeColors.border,
+                }}
+              >
+                <FaDesktop className="text-emerald-500 text-lg" />
+                <span className="text-xs" style={{ color: themeColors.text }}>System</span>
+              </button>
             </div>
           </div>
         </div>

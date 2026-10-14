@@ -1,12 +1,24 @@
 import { memo, useState, useEffect } from "react";
-import { FaSave, FaCog, FaTags, FaListUl, FaLayerGroup, FaCogs, FaTimes, FaPlus } from "react-icons/fa";
+import { 
+  FaSave, FaCog, FaTags, FaListUl, FaLayerGroup, FaCogs, 
+  FaTimes, FaPlus, FaSun, FaMoon, FaDesktop, FaPalette, FaCheck 
+} from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { toast } from "sonner";
 
 const GlobalSettings = () => {
-  const { themeColors } = useTheme();
+  const { 
+    theme, 
+    resolvedTheme, 
+    isDark, 
+    setTheme, 
+    palette, 
+    changePalette, 
+    themeColors, 
+    colorPalettes 
+  } = useTheme();
   const { token } = useAuth();
   
   const [isLoading, setIsLoading] = useState(true);
@@ -163,6 +175,174 @@ const GlobalSettings = () => {
         {/* Main Configuration Area */}
         <div className="xl:col-span-2 space-y-6">
           
+          {/* Appearance & Dark Mode Settings Card */}
+          <div className="rounded-xl shadow-sm border p-6 transition-all" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+             <div className="flex items-center justify-between mb-6 pb-3 border-b" style={{ borderColor: themeColors.border }}>
+               <h2 className="text-lg font-bold flex items-center gap-2.5" style={{ color: themeColors.text }}>
+                 <div className="p-2 rounded-lg" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+                   <FaPalette className="text-base" />
+                 </div>
+                 Appearance & Dark Mode Settings
+               </h2>
+               <span 
+                 className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                 style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
+               >
+                 {isDark ? "🌙 Dark Active" : "☀️ Light Active"}
+               </span>
+             </div>
+
+             {/* Mode Selector */}
+             <div className="mb-6">
+               <label className="block text-sm font-bold mb-1" style={{ color: themeColors.text }}>
+                 Theme Mode (डार्क / लाइट मोड चुनें)
+               </label>
+               <p className="text-xs mb-3.5" style={{ color: themeColors.textSecondary }}>
+                 Choose your preferred appearance mode. Changes take effect across the entire panel immediately.
+               </p>
+
+               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                 {/* Light Mode Card */}
+                 <div
+                   onClick={() => {
+                     setTheme("light");
+                     toast.success("☀️ Light Mode enabled");
+                   }}
+                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md relative flex flex-col justify-between ${
+                     theme === "light" ? "scale-[1.02]" : "opacity-85 hover:opacity-100"
+                   }`}
+                   style={{
+                     borderColor: theme === "light" ? themeColors.primary : themeColors.border,
+                     backgroundColor: themeColors.background
+                   }}
+                 >
+                   <div className="flex items-center justify-between mb-3">
+                     <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg">
+                       <FaSun />
+                     </div>
+                     {theme === "light" && (
+                       <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: themeColors.primary }}>
+                         <FaCheck />
+                       </span>
+                     )}
+                   </div>
+                   <div>
+                     <p className="font-bold text-sm" style={{ color: themeColors.text }}>Light Mode</p>
+                     <p className="text-xs mt-0.5" style={{ color: themeColors.textSecondary }}>Bright, crisp visual clarity</p>
+                   </div>
+                 </div>
+
+                 {/* Dark Mode Card */}
+                 <div
+                   onClick={() => {
+                     setTheme("dark");
+                     toast.success("🌙 Dark Mode enabled");
+                   }}
+                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md relative flex flex-col justify-between ${
+                     theme === "dark" ? "scale-[1.02]" : "opacity-85 hover:opacity-100"
+                   }`}
+                   style={{
+                     borderColor: theme === "dark" ? themeColors.primary : themeColors.border,
+                     backgroundColor: themeColors.background
+                   }}
+                 >
+                   <div className="flex items-center justify-between mb-3">
+                     <div className="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg">
+                       <FaMoon />
+                     </div>
+                     {theme === "dark" && (
+                       <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: themeColors.primary }}>
+                         <FaCheck />
+                       </span>
+                     )}
+                   </div>
+                   <div>
+                     <p className="font-bold text-sm" style={{ color: themeColors.text }}>Dark Mode</p>
+                     <p className="text-xs mt-0.5" style={{ color: themeColors.textSecondary }}>Sleek, glare-free dark theme</p>
+                   </div>
+                 </div>
+
+                 {/* System Auto Card */}
+                 <div
+                   onClick={() => {
+                     setTheme("system");
+                     toast.success("💻 System preference synced");
+                   }}
+                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md relative flex flex-col justify-between ${
+                     theme === "system" ? "scale-[1.02]" : "opacity-85 hover:opacity-100"
+                   }`}
+                   style={{
+                     borderColor: theme === "system" ? themeColors.primary : themeColors.border,
+                     backgroundColor: themeColors.background
+                   }}
+                 >
+                   <div className="flex items-center justify-between mb-3">
+                     <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg">
+                       <FaDesktop />
+                     </div>
+                     {theme === "system" && (
+                       <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white" style={{ backgroundColor: themeColors.primary }}>
+                         <FaCheck />
+                       </span>
+                     )}
+                   </div>
+                   <div>
+                     <p className="font-bold text-sm" style={{ color: themeColors.text }}>System Auto</p>
+                     <p className="text-xs mt-0.5" style={{ color: themeColors.textSecondary }}>Syncs with OS preference</p>
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             {/* Color Palette Selector */}
+             <div>
+               <label className="block text-sm font-bold mb-1" style={{ color: themeColors.text }}>
+                 Accent & Color Palette (थीम रंग चुनें)
+               </label>
+               <p className="text-xs mb-3.5" style={{ color: themeColors.textSecondary }}>
+                 Select an accent color palette tailored for professional CRM administration.
+               </p>
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                 {Object.entries(colorPalettes).map(([key, pal]) => {
+                   const isSelected = palette === key;
+                   return (
+                     <div
+                       key={key}
+                       onClick={() => {
+                         changePalette(key);
+                         toast.success(`Theme palette changed to ${pal.name}`);
+                       }}
+                       className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                         isSelected ? "ring-2 font-bold" : "hover:shadow-xs opacity-90 hover:opacity-100"
+                       }`}
+                       style={{
+                         backgroundColor: isSelected ? `${themeColors.primary}10` : themeColors.background,
+                         borderColor: isSelected ? themeColors.primary : themeColors.border,
+                       }}
+                     >
+                       <div className="flex items-center gap-3">
+                         <span 
+                           className="w-5 h-5 rounded-full border shadow-xs inline-block shrink-0" 
+                           style={{ backgroundColor: pal.previewColor, borderColor: "rgba(255,255,255,0.2)" }} 
+                         />
+                         <div>
+                           <p className="text-sm font-bold" style={{ color: isSelected ? themeColors.primary : themeColors.text }}>
+                             {pal.name}
+                           </p>
+                           <p className="text-[11px]" style={{ color: themeColors.textSecondary }}>
+                             {pal.description}
+                           </p>
+                         </div>
+                       </div>
+                       {isSelected && <FaCheck className="text-sm shrink-0" style={{ color: themeColors.primary }} />}
+                     </div>
+                   );
+                 })}
+               </div>
+             </div>
+          </div>
+
           {/* General CRM Details */}
           <div className="rounded-xl shadow-sm border p-6 transition-all" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
              <h2 className="text-lg font-semibold mb-6 flex items-center gap-2" style={{ color: themeColors.text }}>
