@@ -1,4 +1,4 @@
-import { memo, useMemo, useEffect, useState } from "react";
+import { memo, useMemo, useEffect, useState, useCallback } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -10,6 +10,7 @@ import {
   PieChart, Pie
 } from "recharts";
 import { useNavigate } from "react-router-dom";
+import SalesRevenueWidget from "../components/SalesRevenueWidget";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -44,43 +45,41 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        setIsAuthError(false);
-        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const fetchDashboardData = useCallback(async () => {
+    if (!token) return;
+    try {
+      setIsLoading(true);
+      setError(null);
+      setIsAuthError(false);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      
+      const url = filterDate 
+        ? `${baseUrl}/dashboard/stats?date=${filterDate}` 
+        : `${baseUrl}/dashboard/stats`;
         
-        const url = filterDate 
-          ? `${baseUrl}/dashboard/stats?date=${filterDate}` 
-          : `${baseUrl}/dashboard/stats`;
-          
-        const statsResponse = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-        
-        if (statsResponse.data.status === "success") {
-          setData(statsResponse.data.data);
-        } else {
-          setError("Failed to fetch dashboard data");
-        }
-      } catch (err) {
-        console.error(err);
-        if (err.response?.status === 401) {
-          setIsAuthError(true);
-          setError("Session expired. Please login again.");
-        } else {
-          setError(err.response?.data?.message || "Error connecting to server");
-        }
-      } finally {
-        setIsLoading(false);
+      const statsResponse = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+      
+      if (statsResponse.data.status === "success") {
+        setData(statsResponse.data.data);
+      } else {
+        setError("Failed to fetch dashboard data");
       }
-    };
-    
-    if (token) {
-      fetchDashboardData();
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 401) {
+        setIsAuthError(true);
+        setError("Session expired. Please login again.");
+      } else {
+        setError(err.response?.data?.message || "Error connecting to server");
+      }
+    } finally {
+      setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, filterDate]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   useEffect(() => {
     if (token) {
@@ -236,6 +235,15 @@ const Dashboard = () => {
           </div>
         ))}
       </div>
+
+      {/* Real-Time Sales & Revenue Count Widget */}
+      <SalesRevenueWidget
+        salesData={data?.salesRevenue}
+        themeColors={themeColors}
+        baseUrl={import.meta.env.VITE_API_BASE_URL}
+        token={token}
+        onRefresh={fetchDashboardData}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart: Categories Breakdown */}

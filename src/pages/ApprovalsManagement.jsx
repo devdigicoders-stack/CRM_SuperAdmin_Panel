@@ -21,7 +21,14 @@ import {
   FaPhoneAlt,
   FaMapMarkerAlt,
   FaRupeeSign,
-  FaBuilding
+  FaBuilding,
+  FaUserTie,
+  FaFileInvoiceDollar,
+  FaMoneyBillWave,
+  FaHandHoldingUsd,
+  FaExternalLinkAlt,
+  FaDownload,
+  FaTimes
 } from "react-icons/fa";
 
 export default function ApprovalsManagement() {
@@ -35,6 +42,10 @@ export default function ApprovalsManagement() {
   const [transferSearch, setTransferSearch] = useState("");
   const [selectedTransferLead, setSelectedTransferLead] = useState(null);
 
+  // Invoice Preview state
+  const [invoiceModalUrl, setInvoiceModalUrl] = useState(null);
+  const [invoiceModalTitle, setInvoiceModalTitle] = useState("");
+
   // Deletions state
   const [deletions, setDeletions] = useState([]);
   const [deletionsLoading, setDeletionsLoading] = useState(true);
@@ -44,6 +55,13 @@ export default function ApprovalsManagement() {
   const [selectedDeletionReq, setSelectedDeletionReq] = useState(null);
 
   const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+
+  const getMediaUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    const serverUrl = baseUrl.replace(/\/api\/v1\/?$/, "");
+    return `${serverUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
 
   useEffect(() => {
     if (activeTab === "transfers") {
@@ -124,13 +142,28 @@ export default function ApprovalsManagement() {
       </div>
     `).join('') || '';
 
+    const salesPerson = lead.assignedTo || lead.branchOwner || lead.originTelecaller;
+    const salesPersonName = lead.salesPersonName || salesPerson?.name || "Unassigned";
+    const dealVal = Number(lead.dealValue) || 0;
+    const rawPaid = lead.amountPaid !== undefined && lead.amountPaid !== null ? Number(lead.amountPaid) : null;
+    const rawPending = lead.pendingAmount !== undefined && lead.pendingAmount !== null ? Number(lead.pendingAmount) : null;
+    const paidVal = rawPaid !== null ? rawPaid : (rawPending !== null && dealVal ? Math.max(0, dealVal - rawPending) : 0);
+    const codVal = rawPending !== null ? rawPending : Math.max(0, dealVal - paidVal);
+
     const { value: formValues } = await Swal.fire({
       title: 'Approve Transfer & Deduct Stock?',
       html: `
         <div style="text-align: left; font-size: 14px;">
           <p style="margin-bottom: 10px; color: #4b5563;">
-            You are approving the transfer for <b>${lead.name}</b> (${lead.phone}). Stock will be deducted from the respective warehouse selected for each product:
+            You are approving the transfer for <b>${lead.name}</b> (${lead.phone}).
           </p>
+          <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+            <div><span style="color: #64748b;">Sales Person:</span> <b style="color: #1e293b;">${salesPersonName}</b></div>
+            <div><span style="color: #64748b;">Total Deal:</span> <b style="color: #1e293b;">₹${dealVal.toLocaleString('en-IN')}</b></div>
+            <div><span style="color: #059669;">Paisa Aa Gya:</span> <b style="color: #059669;">₹${paidVal.toLocaleString('en-IN')}${lead.isBookingAmount ? ' (Booking Token)' : ''}</b></div>
+            <div><span style="color: #d97706;">Pending/COD:</span> <b style="color: #d97706;">₹${codVal.toLocaleString('en-IN')}</b></div>
+            ${lead.invoiceUrl ? `<div style="grid-column: span 2; color: #2563eb;"><b>Invoice:</b> Uploaded (${lead.awbNumber || 'Available'})</div>` : '<div style="grid-column: span 2; color: #64748b;"><b>Invoice:</b> Not Uploaded</div>'}
+          </div>
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 12px;">
             <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Stock Deduction Preview:</span>
             ${itemsListHtml}
@@ -322,7 +355,7 @@ export default function ApprovalsManagement() {
               <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
               <input
                 type="text"
-                placeholder="Search lead, customer phone, AWB..."
+                placeholder="Search lead, customer phone, salesperson, AWB..."
                 value={transferSearch}
                 onChange={(e) => setTransferSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -367,50 +400,133 @@ export default function ApprovalsManagement() {
                 <p className="text-xs text-gray-400 mt-1">Accounts team jab warehouse select karke transfer request bhejegi, wo yahan show hogi.</p>
               </div>
             ) : (
-              transfers.map((lead) => (
-                <div
-                  key={lead._id}
-                  className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row gap-5 lg:items-center justify-between"
-                >
-                  {/* Lead & Customer Info */}
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-black text-gray-900">{lead.name}</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                        {lead.phone}
-                      </span>
-                      {lead.awbNumber && (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
-                          AWB: {lead.awbNumber}
-                        </span>
-                      )}
-                      {lead.transferApprovalStatus === 'pending' ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                          ⏳ Pending Approval
-                        </span>
-                      ) : lead.transferApprovalStatus === 'approved' ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          ✓ Approved & Transferred
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                          ✕ Rejected
-                        </span>
-                      )}
-                    </div>
+              transfers.map((lead) => {
+                const dealVal = Number(lead.dealValue) || 0;
+                const rawPaid = lead.amountPaid !== undefined && lead.amountPaid !== null ? Number(lead.amountPaid) : null;
+                const rawPending = lead.pendingAmount !== undefined && lead.pendingAmount !== null ? Number(lead.pendingAmount) : null;
+                const paidVal = rawPaid !== null ? rawPaid : (rawPending !== null && dealVal ? Math.max(0, dealVal - rawPending) : 0);
+                const codVal = rawPending !== null ? rawPending : Math.max(0, dealVal - paidVal);
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <FaBuilding className="text-gray-400" /> Dispatch Warehouse: <b className="text-gray-800">{lead.dispatchWarehouse?.name || "Not Selected"}</b>
-                      </span>
-                      {lead.dealValue ? (
-                        <span className="flex items-center gap-0.5 font-bold text-gray-800">
-                          <FaRupeeSign className="text-gray-400" /> {lead.dealValue.toLocaleString("en-IN")}
+                const salesPerson = lead.assignedTo || lead.branchOwner || lead.originTelecaller;
+                const salesPersonName = lead.salesPersonName || salesPerson?.name || "Unassigned";
+                const salesPersonRole = salesPerson?.role ? ` (${salesPerson.role})` : "";
+                const invoiceDocUrl = lead.invoiceUrl ? getMediaUrl(lead.invoiceUrl) : null;
+
+                return (
+                  <div
+                    key={lead._id}
+                    className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row gap-5 lg:items-center justify-between"
+                  >
+                    {/* Lead & Customer Info */}
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-black text-gray-900">{lead.name}</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1">
+                          <FaPhoneAlt className="text-[9px]" /> {lead.phone}
                         </span>
-                      ) : null}
-                      <span>Requested by: <b className="text-gray-700">{lead.transferRequestedBy?.name || "Accounts Team"}</b></span>
-                      <span>Date: <b className="text-gray-700">{lead.transferRequestedAt ? new Date(lead.transferRequestedAt).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}</b></span>
-                    </div>
+
+                        {/* Sales Person (Kiska Customer Hai) */}
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1.5 shadow-2xs"
+                          title={`Sales Person: ${salesPersonName}${salesPersonRole}`}
+                        >
+                          <FaUserTie className="text-[10px] text-indigo-600" />
+                          <span>Sales: <b className="font-extrabold text-indigo-900">{salesPersonName}</b></span>
+                        </span>
+
+                        {lead.awbNumber && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                            AWB: {lead.awbNumber}
+                          </span>
+                        )}
+                        {lead.transferApprovalStatus === 'pending' ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                            ⏳ Pending Approval
+                          </span>
+                        ) : lead.transferApprovalStatus === 'approved' ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            ✓ Approved & Transferred
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                            ✕ Rejected
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Financial Highlights & Invoice Strip */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-2.5">
+                        {/* Total Deal Value */}
+                        <div className="p-2.5 bg-gray-50/90 rounded-2xl border border-gray-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                            <FaRupeeSign className="text-[9px] text-gray-400" /> Total Deal
+                          </span>
+                          <span className="text-sm font-black text-gray-900 mt-0.5">
+                            ₹{dealVal.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+
+                        {/* Paisa Aa Gya (Amount Paid) */}
+                        <div className="p-2.5 bg-emerald-50/80 rounded-2xl border border-emerald-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 flex items-center justify-between gap-1">
+                            <span className="flex items-center gap-1"><FaMoneyBillWave className="text-[10px]" /> Paisa Aa Gya</span>
+                            {lead.isBookingAmount && (
+                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                Booking
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-sm font-black text-emerald-700 mt-0.5">
+                            ₹{paidVal.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+
+                        {/* Pending / COD Amount */}
+                        <div className="p-2.5 bg-amber-50/80 rounded-2xl border border-amber-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 flex items-center gap-1">
+                            <FaHandHoldingUsd className="text-[10px]" /> Pending / COD
+                          </span>
+                          <span className="text-sm font-black text-amber-800 mt-0.5">
+                            ₹{codVal.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+
+                        {/* Invoice Status & Action */}
+                        <div className="p-2.5 bg-white rounded-2xl border border-gray-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                            <FaFileInvoiceDollar className="text-[10px] text-blue-500" /> Invoice
+                          </span>
+                          <div className="mt-0.5">
+                            {invoiceDocUrl ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setInvoiceModalUrl(invoiceDocUrl);
+                                  setInvoiceModalTitle(`Invoice - ${lead.name} (${lead.awbNumber || lead.phone})`);
+                                }}
+                                className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer group"
+                                title="Click to view/download invoice document"
+                              >
+                                <span className="truncate max-w-[120px]">{lead.awbNumber ? `AWB: ${lead.awbNumber}` : "View Invoice"}</span>
+                                <FaExternalLinkAlt className="text-[9px] text-blue-400 group-hover:text-blue-600" />
+                              </button>
+                            ) : (
+                              <span className="text-xs font-semibold text-gray-400 italic">Not Uploaded</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <FaBuilding className="text-gray-400" /> Dispatch Warehouse: <b className="text-gray-800">{lead.dispatchWarehouse?.name || "Not Selected"}</b>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FaUserTie className="text-indigo-400" /> Sales Person: <b className="text-indigo-950 font-bold">{salesPersonName}</b>
+                        </span>
+                        <span>Requested by: <b className="text-gray-700">{lead.transferRequestedBy?.name || "Accounts Team"}</b></span>
+                        <span>Date: <b className="text-gray-700">{lead.transferRequestedAt ? new Date(lead.transferRequestedAt).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}</b></span>
+                      </div>
 
                     {/* Stock items badge */}
                     <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 mt-2 space-y-1.5">
@@ -467,8 +583,9 @@ export default function ApprovalsManagement() {
                     )}
                   </div>
                 </div>
-              ))
-            )}
+              );
+            })
+          )}
           </div>
         </div>
       )}
@@ -700,6 +817,55 @@ export default function ApprovalsManagement() {
               >
                 Close Snapshot
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INVOICE PREVIEW MODAL */}
+      {invoiceModalUrl && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100">
+            <div className="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FaFileInvoiceDollar className="text-emerald-400 text-lg" />
+                <h3 className="font-bold text-sm tracking-wide">{invoiceModalTitle || "Invoice Preview"}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={invoiceModalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <FaDownload className="text-xs" />
+                  <span>Open in Tab / Download</span>
+                </a>
+                <button
+                  onClick={() => setInvoiceModalUrl(null)}
+                  className="text-gray-400 hover:text-white p-2 rounded-xl transition-colors cursor-pointer"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-gray-100 p-2 overflow-hidden flex items-center justify-center">
+              {invoiceModalUrl.toLowerCase().split("?")[0].endsWith(".pdf") ? (
+                <iframe
+                  src={`${invoiceModalUrl}#toolbar=1`}
+                  title="Invoice Preview"
+                  className="w-full h-full rounded-2xl border border-gray-200 bg-white"
+                />
+              ) : (
+                <div className="w-full h-full overflow-auto flex items-center justify-center p-4">
+                  <img
+                    src={invoiceModalUrl}
+                    alt="Invoice Document"
+                    className="max-h-full max-w-full object-contain rounded-xl shadow-md border border-gray-200"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
