@@ -6,11 +6,8 @@ import {
   FaTimes,
   FaUserCircle,
   FaChevronDown,
-  FaChevronRight,
-  FaSun,
-  FaMoon
+  FaChevronRight
 } from "react-icons/fa";
-import { useTheme } from "../context/ThemeContext";
 
 const SidebarItem = memo(({ route, isActive, themeColors, onClose, currentPath }) => {
   const IconComponent = route.icon;
@@ -134,8 +131,6 @@ const Sidebar = ({
   logout,
   themeColors,
 }) => {
-  const { isDark, toggleTheme } = useTheme();
-
   // 🔥 Filter routes based on hide property and user permissions
   const visibleRoutes = routes.filter((r) => {
     if (r.hide) return false;
@@ -216,47 +211,6 @@ const Sidebar = ({
               />
             ))}
           </nav>
-        </div>
-
-        {/* Dark Mode Quick Switch */}
-        <div className="px-4 py-3 border-t" style={{ borderColor: themeColors.border }}>
-          <div
-            onClick={toggleTheme}
-            className="flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-xs group select-none"
-            style={{
-              backgroundColor: themeColors.background,
-              borderColor: themeColors.border
-            }}
-            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
-                style={{
-                  backgroundColor: isDark ? "rgba(251, 191, 36, 0.15)" : "rgba(79, 70, 229, 0.1)",
-                  color: isDark ? "#fbbf24" : "#4f46e5"
-                }}
-              >
-                {isDark ? <FaSun className="text-sm text-amber-400" /> : <FaMoon className="text-sm text-indigo-600" />}
-              </div>
-              <span className="text-xs font-bold" style={{ color: themeColors.text }}>
-                {isDark ? "Dark Mode" : "Light Mode"}
-              </span>
-            </div>
-
-            {/* iOS style smooth toggle switch */}
-            <div
-              className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors duration-300 ${
-                isDark ? "bg-blue-600" : "bg-gray-300"
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
-                  isDark ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </div>
-          </div>
         </div>
 
         {/* User Section */}
