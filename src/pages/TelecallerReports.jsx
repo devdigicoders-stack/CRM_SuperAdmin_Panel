@@ -519,6 +519,8 @@ const TelecallerReports = () => {
   const summary = analyticsData?.summary || {
     totalLeads: 0,
     totalCalls: 0,
+    pendingCalls: 0,
+    leadsFromCrmUser: 0,
     qualifiedCount: 0,
     convertedCount: 0,
     conversionRate: "0.0%",
@@ -812,8 +814,8 @@ const TelecallerReports = () => {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards Grid (6 High-Impact Metrics) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* Total Leads */}
         <div
           onClick={() => handleOpenDrilldown({
@@ -821,25 +823,48 @@ const TelecallerReports = () => {
             title: `Total Leads Handled ${selectedCity ? `(${selectedCity})` : ''}`,
             subtitle: "All customer leads assigned to or screened by telecaller"
           })}
-          className="p-5 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
+          className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
         >
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
-              Total Leads Handled
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+              Leads Assigned
             </span>
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 group-hover:scale-110 transition-transform">
-              <FaPhoneAlt className="text-lg" />
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 group-hover:scale-110 transition-transform">
+              <FaPhoneAlt className="text-base" />
             </div>
           </div>
-          <div className="text-3xl font-black tracking-tight" style={{ color: themeColors.text }}>
+          <div className="text-2xl font-black tracking-tight" style={{ color: themeColors.text }}>
             {summary.totalLeads.toLocaleString()}
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1">
-              Click to drilldown <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+          <div className="mt-2 text-[11px] font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+            Drilldown <FaArrowRight className="text-[9px]" />
+          </div>
+        </div>
+
+        {/* Received from CRM User (Preeti) */}
+        <div
+          onClick={() => handleOpenDrilldown({
+            metricType: "fromCrmUser",
+            title: "Leads Received from CRM User (Preeti)",
+            subtitle: "All leads assigned by CRM User to telecalling team"
+          })}
+          className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
+          style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+        >
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              From CRM User
             </span>
-            <span className="text-slate-400">Qual Rate: {summary.qualificationRate}</span>
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 group-hover:scale-110 transition-transform">
+              <FaUser className="text-base" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+            {summary.leadsFromCrmUser?.toLocaleString() || 0}
+          </div>
+          <div className="mt-2 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+            CRM Distribution <FaArrowRight className="text-[9px]" />
           </div>
         </div>
 
@@ -850,27 +875,48 @@ const TelecallerReports = () => {
             title: "Calls & Screenings Logged",
             subtitle: "All audit call remarks submitted by telecallers"
           })}
-          className="p-5 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
+          className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
         >
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
-              Calls & Remarks Logged
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+              Calls Completed
             </span>
-            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 group-hover:scale-110 transition-transform">
-              <FaPhoneVolume className="text-lg" />
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 group-hover:scale-110 transition-transform">
+              <FaPhoneVolume className="text-base" />
             </div>
           </div>
-          <div className="text-3xl font-black tracking-tight" style={{ color: themeColors.text }}>
+          <div className="text-2xl font-black tracking-tight" style={{ color: themeColors.text }}>
             {summary.totalCalls.toLocaleString()}
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-purple-600 dark:text-purple-400 flex items-center gap-1">
-              Audit logs <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+          <div className="mt-2 text-[11px] font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+            Audit logs <FaArrowRight className="text-[9px]" />
+          </div>
+        </div>
+
+        {/* Total Pending Calls */}
+        <div
+          onClick={() => handleOpenDrilldown({
+            metricType: "pendingCalls",
+            title: "Total Pending Calls",
+            subtitle: "Assigned leads currently waiting for calling touchpoint"
+          })}
+          className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
+          style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+        >
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              Pending Calls
             </span>
-            <span className="text-slate-400">
-              Avg {summary.totalLeads > 0 ? (summary.totalCalls / summary.totalLeads).toFixed(1) : 0} calls/lead
-            </span>
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 group-hover:scale-110 transition-transform">
+              <FaClock className="text-base" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+            {summary.pendingCalls?.toLocaleString() || 0}
+          </div>
+          <div className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+            Awaiting call <FaArrowRight className="text-[9px]" />
           </div>
         </div>
 
@@ -878,30 +924,25 @@ const TelecallerReports = () => {
         <div
           onClick={() => handleOpenDrilldown({
             metricType: "qualified",
-            title: "Qualified & Handed Over to Branch",
-            subtitle: "Leads verified and assigned to regional branches"
+            title: "Qualified & Handed Over to Sales",
+            subtitle: "Leads verified and assigned to regional sales branches"
           })}
-          className="p-5 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
+          className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
         >
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
-              Handed Over to Branch
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+              Handed to Sales
             </span>
-            <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-600 group-hover:scale-110 transition-transform">
-              <FaCodeBranch className="text-lg" />
+            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 group-hover:scale-110 transition-transform">
+              <FaCodeBranch className="text-base" />
             </div>
           </div>
-          <div className="text-3xl font-black text-teal-600 dark:text-teal-400 tracking-tight">
+          <div className="text-2xl font-black text-teal-600 dark:text-teal-400 tracking-tight">
             {summary.qualifiedCount.toLocaleString()}
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1">
-              Branch handovers <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
-            </span>
-            <span className="text-teal-600 font-bold bg-teal-500/10 px-2 py-0.5 rounded-full">
-              {summary.qualificationRate}
-            </span>
+          <div className="mt-2 text-[11px] font-semibold text-teal-600 dark:text-teal-400 flex items-center gap-1">
+            Qual: {summary.qualificationRate}
           </div>
         </div>
 
@@ -912,27 +953,22 @@ const TelecallerReports = () => {
             title: "Converted Branch Sales (Won)",
             subtitle: "Qualified leads that successfully converted into won orders"
           })}
-          className="p-5 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
+          className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
         >
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
-              Converted to Sales (Won)
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+              Converted (Won)
             </span>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:scale-110 transition-transform">
-              <FaCheckCircle className="text-lg" />
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:scale-110 transition-transform">
+              <FaCheckCircle className="text-base" />
             </div>
           </div>
-          <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
             {summary.convertedCount.toLocaleString()}
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              Conversion Rate: <span className="font-extrabold">{summary.conversionRate}</span>
-            </span>
-            <span className="text-emerald-600 font-bold">
-              ₹{Number(summary.totalDealValue).toLocaleString()}
-            </span>
+          <div className="mt-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            Rate: {summary.conversionRate}
           </div>
         </div>
       </div>
@@ -1223,8 +1259,10 @@ const TelecallerReports = () => {
             <thead style={{ backgroundColor: themeColors.background, color: themeColors.textSecondary }}>
               <tr className="border-b" style={{ borderColor: themeColors.border }}>
                 <th className="px-4 py-3.5 font-extrabold">Telecaller Name</th>
-                <th className="px-4 py-3.5 font-extrabold text-center">Total Leads</th>
+                <th className="px-4 py-3.5 font-extrabold text-center">Total Assigned</th>
+                <th className="px-4 py-3.5 font-extrabold text-center">From CRM User</th>
                 <th className="px-4 py-3.5 font-extrabold text-center">Calls Logged</th>
+                <th className="px-4 py-3.5 font-extrabold text-center">Pending Calls</th>
                 <th className="px-4 py-3.5 font-extrabold text-center">Handed Over</th>
                 <th className="px-4 py-3.5 font-extrabold text-center">Converted</th>
                 <th className="px-4 py-3.5 font-extrabold text-center">Conversion Rate</th>
@@ -1264,8 +1302,18 @@ const TelecallerReports = () => {
                     <td className="px-4 py-3.5 text-center font-bold" style={{ color: themeColors.text }}>
                       {item.totalLeads}
                     </td>
+                    <td className="px-4 py-3.5 text-center font-bold text-indigo-600 dark:text-indigo-400">
+                      <span className="px-2 py-0.5 rounded-full bg-indigo-500/10">
+                        {item.fromCrmUser || 0}
+                      </span>
+                    </td>
                     <td className="px-4 py-3.5 text-center font-bold text-purple-600 dark:text-purple-400">
                       {item.totalCalls}
+                    </td>
+                    <td className="px-4 py-3.5 text-center font-bold text-amber-600 dark:text-amber-400">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/10">
+                        {item.pendingCalls || 0}
+                      </span>
                     </td>
                     <td className="px-4 py-3.5 text-center font-bold text-teal-600 dark:text-teal-400">
                       {item.qualified}
@@ -1317,7 +1365,7 @@ const TelecallerReports = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-xs italic" style={{ color: themeColors.textSecondary }}>
+                  <td colSpan={11} className="py-12 text-center text-xs italic" style={{ color: themeColors.textSecondary }}>
                     No telecaller performance records found for this period.
                   </td>
                 </tr>
