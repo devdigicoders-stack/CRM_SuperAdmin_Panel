@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from "react";
-import { FaUserClock, FaSearch, FaHistory, FaCheckCircle, FaExclamationCircle, FaChartLine, FaEye, FaTimes, FaCalendarAlt, FaChevronLeft, FaChevronRight, FaBuilding, FaFilter } from "react-icons/fa";
+import { FaUserClock, FaSearch, FaHistory, FaCheckCircle, FaExclamationCircle, FaChartLine, FaEye, FaTimes, FaCalendarAlt, FaChevronLeft, FaChevronRight, FaBuilding, FaFilter, FaPlus } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -26,6 +26,66 @@ const UserHistory = () => {
   // Specific Lead Detail modal inside user history
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [detailLead, setDetailLead] = useState(null);
+  const [newRemarkText, setNewRemarkText] = useState("");
+  const [newRemarkStatus, setNewRemarkStatus] = useState("");
+  const [newFollowUpDate, setNewFollowUpDate] = useState("");
+  const [isSubmittingRemark, setIsSubmittingRemark] = useState(false);
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setNewRemarkText("");
+    setNewRemarkStatus("");
+    setNewFollowUpDate("");
+  };
+
+  const handleAddSuperAdminRemark = async (e) => {
+    e?.preventDefault();
+    if (!detailLead || !newRemarkText.trim()) {
+      toast.error("Please enter a remark note.");
+      return;
+    }
+
+    try {
+      setIsSubmittingRemark(true);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const payload = {
+        note: newRemarkText.trim(),
+      };
+      if (newRemarkStatus) payload.status = newRemarkStatus;
+      if (newFollowUpDate) payload.followUpDate = new Date(newFollowUpDate).toISOString();
+
+      const res = await axios.post(`${baseUrl}/leads/${detailLead._id}/remarks`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const updatedLead = res.data?.data?.lead || res.data?.lead;
+      if (updatedLead) {
+        setDetailLead(updatedLead);
+      } else {
+        const newRemarkObj = {
+          note: newRemarkText.trim(),
+          addedBy: { name: 'Super Admin' },
+          createdAt: new Date().toISOString()
+        };
+        setDetailLead({
+          ...detailLead,
+          remarks: [...(detailLead.remarks || []), newRemarkObj],
+          status: newRemarkStatus || detailLead.status,
+          followUpDate: newFollowUpDate || detailLead.followUpDate
+        });
+      }
+
+      toast.success("Remark added successfully!");
+      setNewRemarkText("");
+      setNewRemarkStatus("");
+      setNewFollowUpDate("");
+    } catch (err) {
+      console.error("Failed to add remark:", err);
+      toast.error(err.response?.data?.message || "Failed to add remark.");
+    } finally {
+      setIsSubmittingRemark(false);
+    }
+  };
 
   const fetchPerformance = async () => {
     if (!token) return;
@@ -645,7 +705,7 @@ const UserHistory = () => {
                   Full profile details and timeline logs
                 </p>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
+              <button onClick={closeDetailModal} className="p-2 rounded-full hover:bg-black/5" style={{ color: themeColors.textSecondary }}>
                 <FaTimes />
               </button>
             </div>
@@ -723,27 +783,35 @@ const UserHistory = () => {
                 </div>
               </div>
 
-              {/* Right Side: Remarks History */}
+              {/* Right Side: Remarks History & Add Super Admin Remark */}
               <div className="w-full md:w-1/2 p-6 flex flex-col gap-4">
-                <h3 className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: themeColors.primary }}>Remarks History</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: themeColors.primary }}>
+                    Remarks History ({detailLead.remarks?.length || 0})
+                  </h3>
+                  <span className="text-[11px] font-semibold" style={{ color: themeColors.textSecondary }}>
+                    Latest first
+                  </span>
+                </div>
                 
-                <div className="flex-1 overflow-y-auto max-h-[50vh] pr-2 custom-scrollbar">
+                {/* Scrollable Timeline */}
+                <div className="overflow-y-auto max-h-[36vh] pr-2 custom-scrollbar flex-1">
                   {detailLead.remarks && detailLead.remarks.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
                       {/* Reverse remarks array to show latest first */}
                       {[...detailLead.remarks].reverse().map((remark, idx) => (
                         <div key={idx} className="relative pl-6 pb-2 border-l-2 last:border-l-0 last:pb-0" style={{ borderColor: themeColors.border }}>
                           <div className="absolute -left-[5px] top-0 w-2 h-2 rounded-full ring-4" style={{ backgroundColor: themeColors.primary, ringColor: themeColors.surface }}></div>
-                          <div className="p-3 rounded-lg border shadow-sm" style={{ backgroundColor: themeColors.background, borderColor: themeColors.border }}>
-                            <div className="flex justify-between items-start gap-4 mb-2">
+                          <div className="p-3 rounded-xl border shadow-xs" style={{ backgroundColor: themeColors.background, borderColor: themeColors.border }}>
+                            <div className="flex justify-between items-start gap-4 mb-1.5">
                               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
                                 {remark.createdAt ? new Date(remark.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Unknown Date'}
                               </span>
                               {remark.addedBy && (
-                                <span className="text-[10px] font-semibold text-gray-500">By {remark.addedBy.name || remark.addedBy}</span>
+                                <span className="text-[11px] font-bold text-gray-500">By {remark.addedBy.name || remark.addedBy}</span>
                               )}
                             </div>
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: themeColors.text }}>
+                            <p className="text-xs leading-relaxed whitespace-pre-wrap font-medium" style={{ color: themeColors.text }}>
                               {remark.note}
                             </p>
                           </div>
@@ -752,16 +820,97 @@ const UserHistory = () => {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="italic" style={{ color: themeColors.textSecondary }}>No remarks history available for this lead.</p>
+                      <p className="italic text-xs" style={{ color: themeColors.textSecondary }}>No remarks history available for this lead.</p>
                     </div>
                   )}
+                </div>
+
+                {/* Superadmin Add Remark Form Card */}
+                <div className="pt-3 border-t mt-auto" style={{ borderColor: themeColors.border }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <FaPlus className="text-xs" style={{ color: themeColors.primary }} />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: themeColors.text }}>
+                      Add Super Admin Remark
+                    </span>
+                  </div>
+                  <div className="space-y-2.5">
+                    <textarea
+                      rows={2}
+                      value={newRemarkText}
+                      onChange={(e) => setNewRemarkText(e.target.value)}
+                      placeholder="Enter remark, customer discussion notes, or admin instructions..."
+                      className="w-full p-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 resize-none"
+                      style={{
+                        backgroundColor: themeColors.background,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      }}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex-1 min-w-[130px]">
+                        <select
+                          value={newRemarkStatus}
+                          onChange={(e) => setNewRemarkStatus(e.target.value)}
+                          className="w-full px-2.5 py-1.5 rounded-lg border text-xs font-semibold focus:outline-none"
+                          style={{
+                            backgroundColor: themeColors.background,
+                            borderColor: themeColors.border,
+                            color: themeColors.text,
+                          }}
+                        >
+                          <option value="">Keep Status ({detailLead.status?.replace('_', ' ')})</option>
+                          <option value="new">New</option>
+                          <option value="assigned">Assigned</option>
+                          <option value="interested">Interested</option>
+                          <option value="callback">Callback</option>
+                          <option value="ringing">Ringing</option>
+                          <option value="busy">Busy</option>
+                          <option value="not_interested">Not Interested</option>
+                          <option value="converted">Converted</option>
+                          <option value="closed">Closed</option>
+                        </select>
+                      </div>
+                      <div className="flex-1 min-w-[130px]">
+                        <input
+                          type="datetime-local"
+                          value={newFollowUpDate}
+                          onChange={(e) => setNewFollowUpDate(e.target.value)}
+                          title="Optional Next Follow-up Date & Time"
+                          className="w-full px-2.5 py-1.5 rounded-lg border text-xs font-medium focus:outline-none"
+                          style={{
+                            backgroundColor: themeColors.background,
+                            borderColor: themeColors.border,
+                            color: themeColors.text,
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isSubmittingRemark || !newRemarkText.trim()}
+                        onClick={handleAddSuperAdminRemark}
+                        className="px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm hover:opacity-90 transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0"
+                        style={{ backgroundColor: themeColors.primary }}
+                      >
+                        {isSubmittingRemark ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <FaPlus className="text-[10px]" /> Add Remark
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             
             <div className="p-4 border-t flex justify-end" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
               <button
-                onClick={() => setIsDetailModalOpen(false)}
+                onClick={closeDetailModal}
                 className="px-6 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 text-white"
                 style={{ backgroundColor: themeColors.primary }}
               >
