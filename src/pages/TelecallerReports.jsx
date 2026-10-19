@@ -842,19 +842,19 @@ const TelecallerReports = () => {
           </div>
         </div>
 
-        {/* Received from CRM User (Preeti) */}
+        {/* Received from CRM User & Admin */}
         <div
           onClick={() => handleOpenDrilldown({
             metricType: "fromCrmUser",
-            title: "Leads Received from CRM User (Preeti)",
-            subtitle: "All leads assigned by CRM User to telecalling team"
+            title: "Leads Received from CRM User & SuperAdmin",
+            subtitle: "All leads assigned by CRM User or Admin to telecalling team"
           })}
           className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
         >
           <div className="flex justify-between items-start mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-              From CRM User
+              From CRM / Admin
             </span>
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 group-hover:scale-110 transition-transform">
               <FaUser className="text-base" />
@@ -864,7 +864,7 @@ const TelecallerReports = () => {
             {summary.leadsFromCrmUser?.toLocaleString() || 0}
           </div>
           <div className="mt-2 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-            CRM Distribution <FaArrowRight className="text-[9px]" />
+            CRM & Admin Distribution <FaArrowRight className="text-[9px]" />
           </div>
         </div>
 
@@ -894,11 +894,11 @@ const TelecallerReports = () => {
           </div>
         </div>
 
-        {/* Total Pending Calls */}
+        {/* Total Pending Calls (Present & Past Backlog) */}
         <div
           onClick={() => handleOpenDrilldown({
             metricType: "pendingCalls",
-            title: "Total Pending Calls",
+            title: "Total Pending Calls (Present & Past Backlog)",
             subtitle: "Assigned leads currently waiting for calling touchpoint"
           })}
           className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
@@ -915,8 +915,9 @@ const TelecallerReports = () => {
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
             {summary.pendingCalls?.toLocaleString() || 0}
           </div>
-          <div className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-            Awaiting call <FaArrowRight className="text-[9px]" />
+          <div className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center justify-between">
+            <span>Past: {summary.pendingCallsPast ?? 0}</span>
+            <span>Today: {summary.pendingCallsToday ?? 0}</span>
           </div>
         </div>
 
