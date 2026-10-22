@@ -74,6 +74,10 @@ const StockReports = () => {
   const [drilldownTargetWarehouse, setDrilldownTargetWarehouse] = useState("all");
   const [drilldownSearch, setDrilldownSearch] = useState("");
   const [drilldownStockStatusFilter, setDrilldownStockStatusFilter] = useState("");
+  const [drilldownPage, setDrilldownPage] = useState(1);
+  const [drilldownTotalPages, setDrilldownTotalPages] = useState(1);
+  const [drilldownTotalCount, setDrilldownTotalCount] = useState(0);
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
 
   // Product Movement Ledger Modal State
   const [ledgerModalOpen, setLedgerModalOpen] = useState(false);
@@ -169,7 +173,8 @@ const StockReports = () => {
     subtitle = "",
     targetWarehouse = selectedWarehouse,
     targetCategory = selectedCategory,
-    targetCity = selectedCity
+    targetCity = selectedCity,
+    targetPage = 1
   }) => {
     setDrilldownTitle(title);
     setDrilldownSubtitle(subtitle);
@@ -177,6 +182,7 @@ const StockReports = () => {
     setDrilldownTargetWarehouse(targetWarehouse);
     setDrilldownSearch("");
     setDrilldownStockStatusFilter(metricType === "lowStock" || metricType === "outOfStock" || metricType === "inStock" ? metricType : "");
+    setDrilldownPage(targetPage);
     setDrilldownOpen(true);
     setDrilldownLoading(true);
     setDrilldownData([]);
@@ -208,6 +214,9 @@ const StockReports = () => {
         params.append("timeframe", activeTimeframe);
       }
 
+      params.append("page", targetPage.toString());
+      params.append("limit", "50");
+
       const res = await axios.get(`${baseUrl}/stock/reports/drilldown?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -215,6 +224,8 @@ const StockReports = () => {
       if (res.data.status === "success") {
         setDrilldownType(res.data.drilldownType || "product");
         setDrilldownData(res.data.data || []);
+        setDrilldownTotalCount(res.data.totalCount || res.data.count || 0);
+        setDrilldownTotalPages(res.data.totalPages || 1);
       }
     } catch (err) {
       console.error("Failed to fetch drilldown stock:", err);
@@ -222,6 +233,19 @@ const StockReports = () => {
     } finally {
       setDrilldownLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > drilldownTotalPages || newPage === drilldownPage) return;
+    handleOpenDrilldown({
+      metricType: drilldownMetric,
+      title: drilldownTitle,
+      subtitle: drilldownSubtitle,
+      targetWarehouse: drilldownTargetWarehouse,
+      targetCategory: selectedCategory,
+      targetCity: selectedCity,
+      targetPage: newPage
+    });
   };
 
   // Open Product Movement Ledger
@@ -273,7 +297,7 @@ const StockReports = () => {
         (p.warehouseStock && p.warehouseStock.some(ws => ws.warehouse?.name && ws.warehouse.name.toLowerCase().includes(drilldownSearch.toLowerCase())));
 
       let matchesStatus = true;
-      const stock = p.currentStock || 0;
+      const stock = p.effectiveStock !== undefined ? p.effectiveStock : (p.currentStock || 0);
       const min = p.minStockLevel || 5;
       if (drilldownStockStatusFilter === "outOfStock") {
         matchesStatus = stock <= 0;
@@ -288,59 +312,99 @@ const StockReports = () => {
   }, [drilldownData, drilldownSearch, drilldownStockStatusFilter, drilldownType]);
 
   // Export Drilldown to CSV
-  const handleExportDrilldownCSV = () => {
-    if (!filteredDrilldownItems.length) {
-      toast.info("No items to export");
-      return;
-    }
+  const handleExportDrilldownCSV = async () => {
+    setIsExportingCSV(true);
+    try {
+      let exportItems = filteredDrilldownItems;
 
-    let csvContent = "";
-    if (drilldownType === "movement") {
-      const headers = ["Date", "Type", "Product", "SKU", "Warehouse", "City", "Quantity", "Unit Price", "Total Price", "Reference No"];
-      const rows = filteredDrilldownItems.map(m => [
-        `"${new Date(m.createdAt).toLocaleString()}"`,
-        `"${m.transactionType?.toUpperCase() || ''}"`,
-        `"${m.product?.name || ''}"`,
-        `"${m.product?.sku || ''}"`,
-        `"${m.warehouse?.name || ''}"`,
-        `"${m.warehouse?.city || ''}"`,
-        m.quantity || 0,
-        m.unitPrice || 0,
-        m.totalPrice || 0,
-        `"${m.referenceNo || ''}"`
-      ]);
-      csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    } else {
-      const headers = ["SKU", "Product Name", "Category", "Brand", "Unit", "Current Stock", "Min Stock Level", "Purchase Price (INR)", "Selling Price (INR)", "Total Valuation (INR)", "Status"];
-      const rows = filteredDrilldownItems.map(p => {
-        const stock = p.currentStock || 0;
-        const min = p.minStockLevel || 5;
-        const statusText = stock <= 0 ? "Out of Stock" : stock <= min ? "Low Stock" : "In Stock";
-        return [
-          `"${p.sku || ''}"`,
-          `"${(p.name || '').replace(/"/g, '""')}"`,
-          `"${p.category?.name || 'N/A'}"`,
-          `"${p.brand?.name || 'N/A'}"`,
-          `"${p.unit?.shortName || p.unit?.name || 'pcs'}"`,
-          stock,
-          min,
-          p.purchasePrice || 0,
-          p.sellingPrice || 0,
-          (stock * (p.purchasePrice || 0)),
-          `"${statusText}"`
-        ];
-      });
-      csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    }
+      // If there are more items on backend than currently loaded page, fetch all matching items for complete export
+      if (drilldownTotalCount > drilldownData.length) {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const params = new URLSearchParams();
+        if (drilldownMetric) params.append("metricType", drilldownMetric);
+        if (drilldownTargetWarehouse && drilldownTargetWarehouse !== "all") params.append("warehouseId", drilldownTargetWarehouse);
+        if (selectedCategory && selectedCategory !== "all") params.append("categoryId", selectedCategory);
+        if (selectedBrand && selectedBrand !== "all") params.append("brandId", selectedBrand);
+        if (selectedCity) params.append("city", selectedCity);
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `stock_drilldown_${drilldownMetric}_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Stock report exported successfully!");
+        if (activeTimeframe === "custom") {
+          if (filterStartDate) params.append("startDate", filterStartDate);
+          if (filterEndDate) params.append("endDate", filterEndDate);
+        } else {
+          params.append("timeframe", activeTimeframe);
+        }
+
+        params.append("all", "true");
+
+        const res = await axios.get(`${baseUrl}/stock/reports/drilldown?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.data.status === "success" && Array.isArray(res.data.data)) {
+          exportItems = res.data.data;
+        }
+      }
+
+      if (!exportItems.length) {
+        toast.info("No items to export");
+        return;
+      }
+
+      let csvContent = "";
+      if (drilldownType === "movement") {
+        const headers = ["Date", "Type", "Product", "SKU", "Warehouse", "City", "Quantity", "Unit Price", "Total Price", "Reference No"];
+        const rows = exportItems.map(m => [
+          `"${new Date(m.date || m.createdAt).toLocaleString()}"`,
+          `"${m.transactionType?.toUpperCase() || ''}"`,
+          `"${(m.product?.name || '').replace(/"/g, '""')}"`,
+          `"${m.product?.sku || ''}"`,
+          `"${m.warehouse?.name || ''}"`,
+          `"${m.warehouse?.city || ''}"`,
+          m.quantity || 0,
+          m.unitPrice || 0,
+          m.totalPrice || 0,
+          `"${m.referenceNo || m.invoiceNumber || ''}"`
+        ]);
+        csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      } else {
+        const headers = ["SKU", "Product Name", "Category", "Brand", "Unit", "Depot Stock", "Global Stock", "Min Stock Level", "Purchase Price (INR)", "Selling Price (INR)", "Valuation (INR)", "Status"];
+        const rows = exportItems.map(p => {
+          const effectiveStock = p.effectiveStock !== undefined ? p.effectiveStock : (p.currentStock || 0);
+          const globalStock = p.currentStock || 0;
+          const min = p.minStockLevel || 5;
+          const statusText = effectiveStock <= 0 ? "Out of Stock" : effectiveStock <= min ? "Low Stock" : "In Stock";
+          return [
+            `"${p.sku || ''}"`,
+            `"${(p.name || '').replace(/"/g, '""')}"`,
+            `"${p.category?.name || 'N/A'}"`,
+            `"${p.brand?.name || 'N/A'}"`,
+            `"${p.unit?.shortName || p.unit?.name || 'pcs'}"`,
+            effectiveStock,
+            globalStock,
+            min,
+            p.purchasePrice || 0,
+            p.sellingPrice || 0,
+            (effectiveStock * (p.purchasePrice || 0)),
+            `"${statusText}"`
+          ];
+        });
+        csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      }
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `stock_drilldown_${drilldownMetric}_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Stock report exported successfully!");
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Failed to export report");
+    } finally {
+      setIsExportingCSV(false);
+    }
   };
 
   const hasLocationFilter = Boolean(selectedCity);
@@ -771,7 +835,9 @@ const StockReports = () => {
             <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1">
               Click to drilldown <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
             </span>
-            <span className="text-slate-400">{categories.length} Categories</span>
+            <span className="text-slate-400">
+              {selectedCategory !== "all" ? (categories.find(c => c._id === selectedCategory)?.name || "Filtered Category") : `${categories.length} Categories`}
+            </span>
           </div>
         </div>
 
@@ -800,7 +866,9 @@ const StockReports = () => {
             <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
               Healthy Stock: <span className="font-extrabold">{summary.inStockCount} items</span>
             </span>
-            <span className="text-slate-400">across {summary.totalWarehouses} depots</span>
+            <span className="text-slate-400">
+              {selectedWarehouse !== "all" ? (warehouses.find(w => w._id === selectedWarehouse)?.name || "Filtered Depot") : `across ${summary.totalWarehouses} depots`}
+            </span>
           </div>
         </div>
 
@@ -1250,7 +1318,7 @@ const StockReports = () => {
                     </thead>
                     <tbody>
                       {filteredDrilldownItems.map((p, idx) => {
-                        const stock = p.currentStock || 0;
+                        const stock = p.effectiveStock !== undefined ? p.effectiveStock : (p.currentStock || 0);
                         const min = p.minStockLevel || 5;
                         const isOut = stock <= 0;
                         const isLow = stock > 0 && stock <= min;
@@ -1270,7 +1338,12 @@ const StockReports = () => {
                             </td>
 
                             <td className="px-4 py-3 text-center font-black text-sm" style={{ color: themeColors.text }}>
-                              {stock} <span className="text-[10px] font-semibold text-slate-600">{p.unit?.shortName || "pcs"}</span>
+                              <div>
+                                {stock} <span className="text-[10px] font-semibold text-slate-600">{p.unit?.shortName || "pcs"}</span>
+                              </div>
+                              {selectedWarehouse !== "all" && p.currentStock !== undefined && p.currentStock !== stock && (
+                                <div className="text-[10px] font-normal text-slate-400">Total: {p.currentStock}</div>
+                              )}
                             </td>
 
                             <td className="px-4 py-3 text-center font-bold text-slate-700">
@@ -1318,10 +1391,46 @@ const StockReports = () => {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-2 bg-black/5 dark:bg-white/5" style={{ borderColor: themeColors.border }}>
-              <span className="text-xs font-bold" style={{ color: themeColors.textSecondary }}>
-                Showing {filteredDrilldownItems.length} records in drilldown
-              </span>
+            <div className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3 bg-black/5 dark:bg-white/5" style={{ borderColor: themeColors.border }}>
+              <div className="flex items-center gap-3 text-xs font-bold" style={{ color: themeColors.textSecondary }}>
+                <span>
+                  Showing {filteredDrilldownItems.length} {drilldownTotalCount > filteredDrilldownItems.length ? `of ${drilldownTotalCount}` : ""} records
+                </span>
+                <button
+                  onClick={handleExportDrilldownCSV}
+                  disabled={isExportingCSV || !drilldownData.length}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 transition cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-50"
+                  style={{ borderColor: themeColors.border, color: themeColors.text }}
+                >
+                  <FaFileExport className={isExportingCSV ? "animate-spin" : ""} />
+                  {isExportingCSV ? "Exporting..." : "Export CSV"}
+                </button>
+              </div>
+
+              {drilldownTotalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(drilldownPage - 1)}
+                    disabled={drilldownPage <= 1 || drilldownLoading}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer disabled:opacity-40"
+                    style={{ borderColor: themeColors.border, color: themeColors.text }}
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs font-bold px-2" style={{ color: themeColors.text }}>
+                    Page {drilldownPage} of {drilldownTotalPages}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(drilldownPage + 1)}
+                    disabled={drilldownPage >= drilldownTotalPages || drilldownLoading}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer disabled:opacity-40"
+                    style={{ borderColor: themeColors.border, color: themeColors.text }}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={() => setDrilldownOpen(false)}
                 className="px-6 py-2 rounded-xl text-xs font-bold text-white transition shadow-sm hover:opacity-90 cursor-pointer"
