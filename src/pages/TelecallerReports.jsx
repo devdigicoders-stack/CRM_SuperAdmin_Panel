@@ -88,6 +88,10 @@ const TelecallerReports = () => {
   const [drilldownOpen, setDrilldownOpen] = useState(false);
   const [drilldownLoading, setDrilldownLoading] = useState(false);
   const [drilldownData, setDrilldownData] = useState([]);
+  const [drilldownTotalCount, setDrilldownTotalCount] = useState(0);
+  const [drilldownPage, setDrilldownPage] = useState(1);
+  const [drilldownTotalPages, setDrilldownTotalPages] = useState(1);
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [drilldownTitle, setDrilldownTitle] = useState("");
   const [drilldownSubtitle, setDrilldownSubtitle] = useState("");
   const [drilldownMetric, setDrilldownMetric] = useState("totalLeads");
@@ -188,7 +192,7 @@ const TelecallerReports = () => {
     }
   }, [fetchAnalytics, token]);
 
-  // Open Drilldown View
+  // Open Drilldown View (Supports Pagination & Matches Backend 100%)
   const handleOpenDrilldown = async ({
     metricType = "totalLeads",
     title = "Drilldown Leads",
@@ -196,18 +200,20 @@ const TelecallerReports = () => {
     statusValue = "",
     targetTelecaller = selectedTelecaller,
     targetCity = selectedCity,
-    targetState = selectedState
+    targetState = selectedState,
+    page = 1
   }) => {
     setDrilldownTitle(title);
     setDrilldownSubtitle(subtitle);
     setDrilldownMetric(metricType);
     setDrilldownStatusValue(statusValue);
     setDrilldownTargetTelecaller(targetTelecaller);
-    setDrilldownSearch("");
-    setDrilldownStatusFilter(statusValue || "");
+    if (page === 1) {
+      setDrilldownSearch("");
+      setDrilldownStatusFilter(statusValue || "");
+    }
     setDrilldownOpen(true);
     setDrilldownLoading(true);
-    setDrilldownData([]);
 
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -242,12 +248,18 @@ const TelecallerReports = () => {
         params.append("timeframe", activeTimeframe);
       }
 
+      params.append("page", page.toString());
+      params.append("limit", "100");
+
       const res = await axios.get(`${baseUrl}/reports/telecaller-drilldown?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (res.data.status === "success") {
         setDrilldownData(res.data.data || []);
+        setDrilldownTotalCount(res.data.totalCount ?? res.data.data?.length ?? 0);
+        setDrilldownPage(res.data.page || 1);
+        setDrilldownTotalPages(res.data.totalPages || 1);
       }
     } catch (err) {
       console.error("Failed to fetch drilldown leads:", err);
@@ -255,6 +267,21 @@ const TelecallerReports = () => {
     } finally {
       setDrilldownLoading(false);
     }
+  };
+
+  // Change page in drilldown modal
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > drilldownTotalPages || newPage === drilldownPage) return;
+    handleOpenDrilldown({
+      metricType: drilldownMetric,
+      title: drilldownTitle,
+      subtitle: drilldownSubtitle,
+      statusValue: drilldownStatusValue,
+      targetTelecaller: drilldownTargetTelecaller,
+      targetCity: selectedCity,
+      targetState: selectedState,
+      page: newPage
+    });
   };
 
   // Filter Drilldown Table
@@ -276,58 +303,91 @@ const TelecallerReports = () => {
     });
   }, [drilldownData, drilldownSearch, drilldownStatusFilter]);
 
-  // Export Drilldown to CSV
-  const handleExportDrilldownCSV = () => {
-    if (!filteredDrilldownLeads.length) {
+  // Export Drilldown to CSV (Fetches full dataset if paginated)
+  const handleExportDrilldownCSV = async () => {
+    if (!drilldownTotalCount && !drilldownData.length) {
       toast.info("No leads available to export");
       return;
     }
 
-    const headers = [
-      "Customer Name",
-      "Phone",
-      "Email",
-      "City",
-      "State",
-      "PinCode",
-      "Status",
-      "Origin Telecaller",
-      "Assigned Branch",
-      "Follow-up Date",
-      "Deal Value (INR)",
-      "Amount Paid (INR)",
-      "Telecaller Incentive (INR)",
-      "Latest Remark",
-      "Created At"
-    ];
+    try {
+      setIsExportingCSV(true);
+      toast.info("Preparing complete CSV export...");
 
-    const rows = filteredDrilldownLeads.map((l) => [
-      `"${l.name || 'N/A'}"`,
-      `"${l.phone || 'N/A'}"`,
-      `"${l.email || 'N/A'}"`,
-      `"${l.city || 'N/A'}"`,
-      `"${l.state || 'N/A'}"`,
-      `"${l.pinCode || 'N/A'}"`,
-      `"${(l.status || 'N/A').toUpperCase()}"`,
-      `"${l.originTelecaller?.name || 'N/A'}"`,
-      `"${l.assignedBranch?.name || 'Unassigned'}"`,
-      `"${l.followUpDate ? new Date(l.followUpDate).toLocaleDateString() : 'None'}"`,
-      l.dealValue || 0,
-      l.amountPaid || 0,
-      l.telecallerIncentive || 0,
-      `"${(l.remarks?.[l.remarks.length - 1]?.note || '').replace(/"/g, '""')}"`,
-      `"${new Date(l.createdAt).toLocaleDateString()}"`
-    ]);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const params = new URLSearchParams();
+      if (drilldownTargetTelecaller && drilldownTargetTelecaller !== "all") params.append("telecallerId", drilldownTargetTelecaller);
+      if (drilldownMetric) params.append("metricType", drilldownMetric);
+      if (drilldownStatusValue) params.append("statusValue", drilldownStatusValue);
+      if (selectedBranch) params.append("branchId", selectedBranch);
+      if (selectedState) params.append("state", selectedState);
+      if (selectedCity) params.append("city", selectedCity);
+      if (selectedPinCode) params.append("pinCode", selectedPinCode.trim());
+      if (activeTimeframe === "custom") {
+        if (filterStartDate) params.append("startDate", filterStartDate);
+        if (filterEndDate) params.append("endDate", filterEndDate);
+      } else {
+        params.append("timeframe", activeTimeframe);
+      }
+      params.append("exportAll", "true");
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `telecaller_drilldown_${drilldownMetric}_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Drilldown report exported successfully!");
+      const res = await axios.get(`${baseUrl}/reports/telecaller-drilldown?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const exportList = res.data?.data || filteredDrilldownLeads;
+
+      const headers = [
+        "Customer Name",
+        "Phone",
+        "Email",
+        "City",
+        "State",
+        "PinCode",
+        "Status",
+        "Origin Telecaller",
+        "Assigned Branch",
+        "Follow-up Date",
+        "Deal Value (INR)",
+        "Amount Paid (INR)",
+        "Telecaller Incentive (INR)",
+        "Latest Remark",
+        "Created At"
+      ];
+
+      const rows = exportList.map((l) => [
+        `"${l.name || 'N/A'}"`,
+        `"${l.phone || 'N/A'}"`,
+        `"${l.email || 'N/A'}"`,
+        `"${l.city || 'N/A'}"`,
+        `"${l.state || 'N/A'}"`,
+        `"${l.pinCode || 'N/A'}"`,
+        `"${(l.status || 'N/A').toUpperCase()}"`,
+        `"${l.originTelecaller?.name || 'N/A'}"`,
+        `"${l.assignedBranch?.name || 'Unassigned'}"`,
+        `"${l.followUpDate ? new Date(l.followUpDate).toLocaleDateString() : 'None'}"`,
+        l.dealValue || 0,
+        l.amountPaid || 0,
+        l.telecallerIncentive || 0,
+        `"${(l.remarks?.[l.remarks.length - 1]?.note || '').replace(/"/g, '""')}"`,
+        `"${new Date(l.createdAt).toLocaleDateString()}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `telecaller_${drilldownMetric}_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Exported ${exportList.length} leads successfully!`);
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast.error("Failed to export CSV");
+    } finally {
+      setIsExportingCSV(false);
+    }
   };
 
   // Clear all location filters
@@ -1386,13 +1446,16 @@ const TelecallerReports = () => {
             {/* Drilldown Header */}
             <div className="p-5 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3" style={{ borderColor: themeColors.border }}>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="p-2 rounded-xl bg-blue-500/10 text-blue-600">
                     <FaHeadset className="text-base" />
                   </span>
                   <h2 className="text-xl font-black tracking-tight" style={{ color: themeColors.text }}>
                     {drilldownTitle}
                   </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-400/30">
+                    {drilldownTotalCount ? `${drilldownTotalCount.toLocaleString()} Total Leads` : `${drilldownData.length} Leads`}
+                  </span>
                 </div>
                 {drilldownSubtitle && (
                   <p className="text-xs font-medium mt-0.5" style={{ color: themeColors.textSecondary }}>
@@ -1404,10 +1467,11 @@ const TelecallerReports = () => {
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <button
                   onClick={handleExportDrilldownCSV}
-                  disabled={!filteredDrilldownLeads.length}
+                  disabled={!drilldownTotalCount && !filteredDrilldownLeads.length || isExportingCSV}
                   className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <FaDownload /> Export CSV ({filteredDrilldownLeads.length})
+                  <FaDownload className={isExportingCSV ? "animate-bounce" : ""} />
+                  {isExportingCSV ? "Exporting Full Data..." : `Export CSV (${drilldownTotalCount ? drilldownTotalCount.toLocaleString() : filteredDrilldownLeads.length})`}
                 </button>
                 <button
                   onClick={() => setDrilldownOpen(false)}
@@ -1612,18 +1676,48 @@ const TelecallerReports = () => {
               )}
             </div>
 
-            {/* Drilldown Footer */}
-            <div className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-2 bg-black/5 dark:bg-white/5" style={{ borderColor: themeColors.border }}>
-              <span className="text-xs font-bold" style={{ color: themeColors.textSecondary }}>
-                Showing {filteredDrilldownLeads.length} of {drilldownData.length} records in drilldown
-              </span>
-              <button
-                onClick={() => setDrilldownOpen(false)}
-                className="px-6 py-2 rounded-xl text-xs font-bold text-white transition shadow-sm hover:opacity-90 cursor-pointer"
-                style={{ backgroundColor: themeColors.primary }}
-              >
-                Close Drilldown
-              </button>
+            {/* Drilldown Footer with Pagination */}
+            <div className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3 bg-black/5 dark:bg-white/5" style={{ borderColor: themeColors.border }}>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs font-bold" style={{ color: themeColors.textSecondary }}>
+                  Showing {(drilldownPage - 1) * 100 + 1} - {Math.min(drilldownPage * 100, drilldownTotalCount || filteredDrilldownLeads.length)} of {(drilldownTotalCount || filteredDrilldownLeads.length).toLocaleString()} matching leads
+                </span>
+                {drilldownTotalPages > 1 && (
+                  <span className="text-xs font-black px-2 py-0.5 rounded bg-black/10 dark:bg-white/10" style={{ color: themeColors.text }}>
+                    Page {drilldownPage} of {drilldownTotalPages}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {drilldownTotalPages > 1 && (
+                  <div className="flex items-center gap-1.5 mr-2">
+                    <button
+                      disabled={drilldownPage <= 1 || drilldownLoading}
+                      onClick={() => handlePageChange(drilldownPage - 1)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold border transition disabled:opacity-40 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+                      style={{ borderColor: themeColors.border, color: themeColors.text }}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      disabled={drilldownPage >= drilldownTotalPages || drilldownLoading}
+                      onClick={() => handlePageChange(drilldownPage + 1)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold border transition disabled:opacity-40 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+                      style={{ borderColor: themeColors.border, color: themeColors.text }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={() => setDrilldownOpen(false)}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white transition shadow-sm hover:opacity-90 cursor-pointer"
+                  style={{ backgroundColor: themeColors.primary }}
+                >
+                  Close Drilldown
+                </button>
+              </div>
             </div>
           </div>
         </div>
