@@ -56,6 +56,7 @@ const STATUS_CONFIG = {
   converted: { label: "Converted to Sale", color: "#16a34a", bg: "bg-green-100 text-green-900 border border-green-300" },
   closed: { label: "Closed", color: "#047857", bg: "bg-emerald-100 text-emerald-900 border border-emerald-300" },
   not_interested: { label: "Not Interested", color: "#475569", bg: "bg-slate-200 text-slate-800 border border-slate-300" },
+  teacher_required_later: { label: "Teacher Required Later", color: "#8b5cf6", bg: "bg-purple-100 text-purple-900 border border-purple-300" },
   invalid_number: { label: "Invalid Number", color: "#dc2626", bg: "bg-red-100 text-red-900 border border-red-300" },
   disqualified: { label: "Disqualified", color: "#e11d48", bg: "bg-rose-100 text-rose-900 border border-rose-300" },
   call_done: { label: "Call Done", color: "#334155", bg: "bg-slate-200 text-slate-800 border border-slate-300" },
