@@ -881,8 +881,8 @@ const TelecallerReports = () => {
         <div
           onClick={() => handleOpenDrilldown({
             metricType: "totalLeads",
-            title: `Total Leads Handled ${selectedCity ? `(${selectedCity})` : ''}`,
-            subtitle: "All customer leads assigned to or screened by telecaller"
+            title: `Customer Leads Assigned ${selectedCity ? `(${selectedCity})` : ''}`,
+            subtitle: "Customer leads assigned to telecaller in selected timeframe"
           })}
           className="p-4 rounded-2xl border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer group relative overflow-hidden"
           style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
